@@ -1,0 +1,857 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+.u2-page {
+  /* 1. Biến màu giao diện Vé Tàu */
+  --navy: #101B33;
+  --navy-light: #1C2B4A;
+  --paper: #FFFDF6;
+  --page-bg: #E9EBF1;
+  --amber: #FFB400;
+  --amber-dark: #DB9A00;
+  --teal: #0F8B6C;
+  --red: #C6493F;
+  --ink: #101B33;
+  --ink-muted: #6B7285;
+
+  /* 2. Biến màu Trang chủ — tông SÁNG, dùng chung bảng màu đặc trưng UTC2
+     (xanh navy + vàng amber + xanh ngọc teal) thay vì dark-mode trung tính,
+     để đồng bộ nhận diện thương hiệu với màn hình vé tàu. */
+  --fb-bg: #EEF1F7;       /* nền trang: xám xanh rất nhạt */
+  --fb-card: #FFFFFF;     /* thẻ/bài viết: trắng tinh */
+  --fb-hover: #EAF0FB;    /* hover: xanh nhạt */
+  --fb-text: var(--navy);
+  --fb-muted: var(--ink-muted);
+  --fb-blue: #1D63D1;     /* xanh dương sáng đặc trưng UTC2 */
+  --fb-divider: #E1E6EF;
+  --fb-green: var(--teal);
+  
+  min-height: 100vh;
+  width: 100%;
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+  
+  /* Mặc định hiển thị hình nền trang đăng nhập */
+  background: url('/utc-15-tang.jpg') no-repeat center center fixed;
+  background-size: cover;
+  position: relative;
+  z-index: 0;
+
+  /* Căn giữa chiếc vé tàu */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Lớp phủ mờ màu xanh tối bọc trên hình nền (ở màn hình đăng nhập) */
+.u2-page::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(16, 27, 51, 0.4);
+  z-index: -1;
+}
+
+/* KHI ĐÃ ĐĂNG NHẬP (u2-home-layout xuất hiện): Thay đổi cấu trúc toàn trang */
+.u2-page:has(.u2-home-layout) {
+  display: block;
+  background: var(--fb-bg);
+}
+/* Ẩn lớp phủ mờ khi đã vào trang chủ */
+.u2-page:has(.u2-home-layout)::before {
+  display: none;
+}
+
+/* ==========================================
+   BỐ CỤC TRANG CHỦ (FACEBOOK STYLE)
+   ========================================== */
+
+/* THANH NAVBAR TRÊN CÙNG TRÀN VIỀN */
+.u2-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: linear-gradient(120deg, var(--navy) 0%, var(--navy-light) 100%);
+  padding: 0 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 100;
+  box-shadow: 0 1px 8px rgba(16, 27, 51, 0.25);
+}
+.u2-nav-logo {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: 'Bebas Neue', sans-serif;
+  color: var(--amber);
+  letter-spacing: 0.8px;
+}
+.u2-user-pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.u2-user-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--paper);
+}
+.u2-logout-btn {
+  background: rgba(255, 253, 246, 0.12);
+  color: var(--paper);
+  border: 1px solid rgba(255, 180, 0, 0.4);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.2s, border-color 0.2s;
+}
+.u2-logout-btn:hover {
+  background: rgba(255, 180, 0, 0.18);
+  border-color: var(--amber);
+}
+
+/* CHIA TRANG CHỦ THÀNH 3 CỘT */
+/* Lưu ý: .u2-sidebar và .u2-right-sidebar dùng position:fixed nên
+   KHÔNG tham gia vào grid layout (bị loại khỏi luồng grid theo spec CSS).
+   Vì vậy không dùng grid-template-columns ở đây (nếu dùng, .u2-main-content
+   sẽ là grid-item duy nhất và bị co cứng vào cột đầu tiên 280px).
+   Thay vào đó, dùng margin trên .u2-main-content để chừa đúng chỗ cho
+   2 cột sidebar cố định. */
+.u2-home-layout {
+  padding-top: 56px; /* Chừa chỗ cho navbar */
+  min-height: calc(100vh - 56px);
+  width: 100%;
+}
+
+/* THANH SIDEBAR TRÁI */
+.u2-sidebar {
+  position: fixed;
+  top: 56px;
+  left: 0;
+  width: 280px;
+  bottom: 0;
+  padding: 16px 8px;
+  overflow-y: auto;
+  display: none; /* Ẩn trên mobile */
+  background: var(--fb-card);
+  border-right: 1px solid var(--fb-divider);
+}
+@media (min-width: 768px) {
+  .u2-sidebar { display: block; }
+  /* Chừa chỗ bên trái cho sidebar cố định */
+  .u2-main-content { margin-left: 280px; }
+}
+.u2-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--fb-text);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-bottom: 4px;
+}
+.u2-menu-item:hover {
+  background: var(--fb-hover);
+}
+.u2-menu-item.active {
+  background: rgba(255, 180, 0, 0.14);
+  color: var(--amber-dark);
+  font-weight: 700;
+}
+
+/* BẢNG TIN TRUNG TÂM (NEWSFEED) */
+.u2-main-content {
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+}
+.u2-feed {
+  width: 100%;
+  max-width: 580px; /* Độ rộng tiêu chuẩn của bài viết FB */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* THẺ BÀI VIẾT TRÊN FEED */
+.u2-card {
+  background: var(--fb-card);
+  border-radius: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--fb-divider);
+  box-shadow: 0 1px 3px rgba(16, 27, 51, 0.06);
+}
+
+/* CỘT TIỆN ÍCH BÊN PHẢI (WIDGET) */
+.u2-right-sidebar {
+  position: fixed;
+  top: 56px;
+  right: 0;
+  width: 280px;
+  bottom: 0;
+  padding: 16px;
+  overflow-y: auto;
+  display: none;
+  background: var(--fb-card);
+  border-left: 1px solid var(--fb-divider);
+}
+@media (min-width: 1100px) {
+  .u2-right-sidebar { display: block; }
+  /* Chừa chỗ bên phải cho sidebar cố định — CHỈ áp dụng cho màn hình
+     newsfeed (:not(.call-mode)), vì màn hình gọi video không có sidebar
+     phải nên không cần chừa chỗ, tránh bị lệch layout lãng phí. */
+  .u2-main-content:not(.call-mode) { margin-right: 280px; }
+}
+
+
+/* ==========================================
+   GIAO DIỆN CHIẾC VÉ TÀU (LÚC CHƯA ĐĂNG NHẬP)
+   ========================================== */
+.u2-ticket {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  background: var(--paper);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px -20px rgba(16,27,51,0.45), 0 2px 0 rgba(16,27,51,0.04);
+  animation: u2-rise 0.5s cubic-bezier(0.2,0.8,0.2,1);
+}
+
+@keyframes u2-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.u2-head {
+  background: linear-gradient(160deg, var(--navy) 0%, var(--navy-light) 100%);
+  color: var(--paper);
+  padding: 26px 26px 30px;
+  position: relative;
+}
+.u2-route-code {
+  font-size: 11px;
+  color: rgba(255,253,246,0.55);
+  letter-spacing: 0.12em;
+}
+.u2-wordmark {
+  font-size: 34px;
+  line-height: 1;
+  margin-top: 2px;
+}
+.u2-tagline {
+  font-size: 12.5px;
+  color: rgba(255,253,246,0.65);
+  margin-top: 6px;
+}
+
+.u2-stations {
+  display: flex;
+  align-items: center;
+  margin-top: 22px;
+  gap: 8px;
+}
+.u2-dot {
+  width: 11px; height: 11px; border-radius: 50%;
+  background: rgba(255,253,246,0.3);
+  border: 2px solid rgba(255,253,246,0.5);
+  flex-shrink: 0;
+  transition: all 0.35s ease;
+}
+.u2-dot.on {
+  background: var(--amber);
+  border-color: var(--amber);
+  box-shadow: 0 0 0 4px rgba(255,180,0,0.2);
+}
+.u2-track {
+  flex: 1;
+  height: 3px;
+  background: rgba(255,253,246,0.22);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.u2-track-fill {
+  height: 100%;
+  background: var(--amber);
+  transition: width 0.5s cubic-bezier(0.2,0.8,0.2,1);
+}
+.u2-station-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: rgba(255,253,246,0.55);
+  margin-top: 7px;
+  text-transform: uppercase;
+}
+
+.u2-perf {
+  position: relative;
+  height: 0;
+  border-top: 2px dashed rgba(16,27,51,0.18);
+}
+.u2-perf::before, .u2-perf::after {
+  content: '';
+  position: absolute;
+  top: -11px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--page-bg);
+}
+.u2-perf::before { left: -11px; }
+.u2-perf::after { right: -11px; }
+
+.u2-body { padding: 26px; }
+
+.u2-banner {
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.u2-banner.ok { background: #E8F5F0; color: var(--teal); border: 1px solid #BFE4D6; }
+.u2-banner.err { background: #FBECEA; color: var(--red); border: 1px solid #F0C9C3; }
+
+.u2-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-bottom: 6px;
+  display: block;
+}
+.u2-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid #E1E0D6;
+  border-radius: 9px;
+  background: #FBFAF4;
+  font-size: 14.5px;
+  color: var(--ink);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.u2-input::placeholder { color: #B7B4A6; }
+.u2-input:focus {
+  border-color: var(--amber);
+  background: var(--paper);
+  box-shadow: 0 0 0 3px rgba(255,180,0,0.18);
+}
+
+.u2-otp-row { display: flex; gap: 8px; justify-content: space-between; }
+.u2-otp-box {
+  width: 44px; height: 52px;
+  text-align: center;
+  font-size: 20px;
+  border-radius: 9px;
+  border: 1.5px solid #E1E0D6;
+  background: #FBFAF4;
+  color: var(--navy);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+}
+.u2-otp-box:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(15,139,108,0.18);
+  transform: translateY(-1px);
+}
+
+.u2-btn {
+  width: 100%;
+  padding: 13px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14.5px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.15s, opacity 0.15s;
+}
+.u2-btn:active { transform: scale(0.98); }
+.u2-btn:disabled { opacity: 0.55; pointer-events: none; }
+.u2-btn.primary {
+  background: var(--amber);
+  color: var(--navy);
+  box-shadow: 0 10px 22px -10px rgba(255,180,0,0.7);
+}
+.u2-btn.primary:hover { background: var(--amber-dark); }
+.u2-btn.ghost {
+  background: transparent;
+  color: var(--ink-muted);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 10px;
+  margin-top: 8px;
+}
+.u2-btn.ghost:hover { color: var(--ink); }
+
+.u2-switch-text {
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-muted);
+  margin-top: 16px;
+}
+.u2-link {
+  color: var(--teal);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  margin-left: 4px;
+}
+.u2-link:hover { text-decoration: underline; }
+
+.u2-stub {
+  border-top: 2px dashed rgba(16,27,51,0.18);
+  padding: 14px 26px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #F4F2E8;
+}
+.u2-barcode {
+  display: flex;
+  gap: 2px;
+  height: 22px;
+  align-items: stretch;
+}
+.u2-barcode span { display: block; background: var(--navy); }
+
+/* Các class bổ trợ font chữ */
+.u2-mono { font-family: 'IBM Plex Mono', monospace; }
+.u2-display { font-family: 'Bebas Neue', sans-serif; }
+/* ==========================================
+   GIAO DIỆN CHUYÊN DỤNG CHO VIDEO CALL NGẪU NHIÊN
+   ========================================== */
+
+/* Cấu hình cột chính dàn rộng hơn để chứa video */
+.u2-main-content.call-mode {
+  max-width: 1300px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 20px;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .u2-main-content.call-mode {
+    margin-left: 280px; /* Chừa khoảng trống cho sidebar trái */
+  }
+}
+
+@media (max-width: 900px) {
+  .u2-main-content.call-mode {
+    grid-template-columns: 1fr; /* Màn hình nhỏ thì đẩy chat xuống dưới */
+  }
+}
+
+/* KHU VỰC CHỨA CÁC KHUNG VIDEO — kiểu OmeTV thật:
+   video người lạ chiếm TOÀN BỘ khung, video của mình là ô nhỏ (PIP)
+   nổi ở góc dưới phải, thanh điều khiển là 1 dải cố định đè lên đáy.
+   Dùng position (không dùng grid) để mọi phần tử luôn khớp đúng vùng
+   hiển thị, tránh bị đẩy ra ngoài chiều cao cố định như trước. */
+.u2-video-container {
+  position: relative;
+  height: calc(100vh - 120px);
+  min-height: 550px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #0B1428;
+}
+
+.video-box {
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.video-box.remote-video {
+  position: absolute;
+  inset: 0;
+  bottom: 82px; /* chừa chỗ cho thanh điều khiển bên dưới */
+  border-radius: 16px;
+  background: #101b33;
+}
+
+.video-box.local-video {
+  position: absolute;
+  right: 16px;
+  bottom: 98px; /* nổi phía trên thanh điều khiển, đúng kiểu PIP */
+  width: 128px;
+  height: 172px;
+  z-index: 5;
+  background: #1c2b4a;
+  border: 2px solid var(--amber);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+  transition: transform 0.15s ease;
+}
+.video-box.local-video:hover { transform: scale(1.03); }
+
+@media (min-width: 600px) {
+  .video-box.local-video { width: 168px; height: 126px; }
+}
+
+/* Luồng giả lập video stream — thêm gradient cho có chiều sâu,
+   thay vì màu phẳng một lớp trông giả trân */
+.mock-video-stream {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 30% 20%, #24345c 0%, #101b33 75%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.75);
+  font-weight: 500;
+  font-size: 13px;
+  text-align: center;
+  padding: 8px;
+}
+.mock-video-stream.self {
+  background: radial-gradient(circle at 30% 20%, #33477a 0%, #1c2b4a 75%);
+}
+
+.video-placeholder {
+  max-width: 360px;
+  padding: 30px;
+  text-align: center;
+  color: #a5b4fc;
+}
+.video-placeholder h3 { color: #fff; margin-bottom: 8px; font-size: 19px; }
+.video-placeholder p { font-size: 14px; line-height: 1.5; margin: 0; }
+
+.video-tag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(16, 27, 51, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: var(--amber);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 2;
+  letter-spacing: 0.02em;
+}
+.video-box.local-video .video-tag {
+  font-size: 10px;
+  padding: 3px 7px;
+  color: var(--paper);
+}
+
+/* CHẾ ĐỘ CHIA ĐÔI MÀN HÌNH — lựa chọn thay thế cho PIP, 2 khung bằng
+   nhau nằm cạnh nhau (ngang) hoặc chồng nhau (dọc, màn hình hẹp).
+   Dùng specificity cao hơn (.split-mode .video-box.remote-video) để
+   ghi đè đúng phần position:absolute mặc định của chế độ PIP. */
+.u2-video-container.split-mode {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+  grid-template-areas: "remote local";
+  gap: 12px;
+  padding-bottom: 82px; /* chừa chỗ cho thanh điều khiển cố định bên dưới */
+  box-sizing: border-box;
+}
+.u2-video-container.split-mode .video-box.remote-video {
+  position: relative;
+  inset: auto;
+  bottom: auto;
+  grid-area: remote;
+  border-radius: 16px;
+}
+.u2-video-container.split-mode .video-box.local-video {
+  position: relative;
+  right: auto;
+  bottom: auto;
+  grid-area: local;
+  width: 100%;
+  height: 100%;
+  border: none;
+  box-shadow: none;
+}
+.u2-video-container.split-mode .video-box.local-video .video-tag {
+  font-size: 12px;
+  padding: 4px 10px;
+  color: var(--amber);
+}
+@media (max-width: 600px) {
+  .u2-video-container.split-mode {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+    grid-template-areas: "remote" "local";
+  }
+}
+
+/* NÚT CHUYỂN ĐỔI KIỂU HIỂN THỊ (PIP <-> Chia đôi) */
+.layout-toggle-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 7;
+  background: rgba(16, 27, 51, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: var(--paper);
+  border: none;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.layout-toggle-btn:hover {
+  background: var(--amber);
+  color: var(--navy);
+}
+
+/* THANH ĐIỀU KHIỂN — cố định đè lên đáy khung video, không nằm trong
+   luồng grid nữa nên không còn bị đẩy tràn ra ngoài chiều cao container */
+.video-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 82px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  z-index: 6;
+  background: linear-gradient(to top, rgba(11,20,40,0.6), transparent);
+}
+
+/* Nút điều khiển: KHÔNG icon, KHÔNG khung viền — bắt mắt nhờ gradient,
+   đổ bóng màu và chuyển động mềm thay vì icon/border như trước. */
+.ctrl-btn {
+  padding: 14px 30px;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+.ctrl-btn:hover { transform: translateY(-2px); filter: brightness(1.06); }
+.ctrl-btn:active { transform: scale(0.96) translateY(0); }
+
+.ctrl-btn.start {
+  background: linear-gradient(135deg, #FFC93C 0%, var(--amber) 55%, var(--amber-dark) 100%);
+  color: var(--navy);
+  box-shadow: 0 8px 22px rgba(255,180,0,0.4);
+  animation: u2-glow-pulse 2.4s ease-in-out infinite;
+}
+.ctrl-btn.start:hover { box-shadow: 0 10px 26px rgba(255,180,0,0.55); }
+
+@keyframes u2-glow-pulse {
+  0%, 100% { box-shadow: 0 8px 22px rgba(255,180,0,0.4); }
+  50% { box-shadow: 0 8px 30px rgba(255,180,0,0.65); }
+}
+
+.ctrl-btn.next {
+  background: linear-gradient(135deg, #14A987 0%, var(--teal) 60%, #0B6B53 100%);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(15,139,108,0.4);
+}
+.ctrl-btn.next:hover { box-shadow: 0 10px 24px rgba(15,139,108,0.55); }
+
+.ctrl-btn.stop {
+  background: linear-gradient(135deg, #E0635A 0%, var(--red) 100%);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(198,73,63,0.4);
+}
+.ctrl-btn.stop:hover { box-shadow: 0 10px 24px rgba(198,73,63,0.55); }
+
+.ctrl-btn.report {
+  background: rgba(255,255,255,0.14);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 11px 20px;
+  box-shadow: none;
+}
+.ctrl-btn.report:hover { background: rgba(255,255,255,0.24); box-shadow: none; }
+
+/* HỘP CHAT VĂN BẢN BÊN PHẢI */
+.u2-chat-sidebar {
+  background: var(--fb-card);
+  border-radius: 12px;
+  border: 1px solid var(--fb-divider);
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 120px);
+  min-height: 550px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.chat-header {
+  padding: 14px;
+  font-weight: 700;
+  border-bottom: 1px solid var(--fb-divider);
+  color: var(--navy);
+  background: var(--fb-hover);
+  border-radius: 12px 12px 0 0;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 14px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.system-msg {
+  font-size: 12px;
+  color: var(--ink-muted);
+  text-align: center;
+  font-style: italic;
+}
+
+.chat-bubble {
+  max-width: 80%;
+  padding: 8px 14px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.chat-bubble.stranger {
+  background: var(--fb-hover);
+  color: var(--navy);
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+}
+.chat-bubble.me {
+  background: var(--fb-blue);
+  color: #fff;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-input-area {
+  padding: 12px;
+  border-top: 1px solid var(--fb-divider);
+  display: flex;
+  gap: 8px;
+}
+.chat-input-area input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--fb-divider);
+  border-radius: 20px;
+  outline: none;
+  font-size: 14px;
+}
+.chat-input-area button {
+  background: var(--fb-blue);
+  color: white;
+  border: none;
+  padding: 0 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.chat-input-area button:disabled, .chat-input-area input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Hiệu ứng loading tìm người lạ */
+.spinner {
+  width: 40px; height: 40px;
+  border: 4px solid rgba(255,255,255,0.1);
+  border-top-color: var(--amber);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+/* ==========================================
+   TỐI ƯU HIỂN THỊ ĐIỆN THOẠI (RESPONSIVE)
+   ========================================== */
+
+@media screen and (max-width: 900px) {
+  /* 1. Chuyển bố cục sang 1 cột dọc, chat rớt xuống dưới video */
+  .u2-main-content.call-mode {
+    grid-template-columns: 1fr;
+    padding: 10px;
+    gap: 15px;
+  }
+
+  /* 2. Khung video ngắn lại trên mobile để nhường chỗ cho Chat */
+  .u2-video-container {
+    height: 55vh; 
+    min-height: 380px;
+    border-radius: 12px;
+  }
+
+  /* 3. Dàn lại thanh điều khiển cho gọn, tránh tràn viền */
+  .video-controls {
+    height: auto;
+    padding: 12px 8px;
+    flex-wrap: wrap; /* Cho phép các nút rớt dòng nếu quá chật */
+    bottom: 0;
+  }
+  
+  .ctrl-btn {
+    padding: 10px 16px;
+    font-size: 13px;
+    flex: 1 1 auto; /* Nút tự co giãn lấp đầy khoảng trống */
+    text-align: center;
+  }
+
+  /* 4. Ô video PIP (của chính mình) nhỏ lại để không che hết đối phương */
+  .video-box.local-video {
+    width: 90px;
+    height: 130px;
+    bottom: 80px; /* Nhích lên trên thanh điều khiển */
+    right: 10px;
+    border-width: 1.5px;
+  }
+
+  /* 5. Khung chat tự động điều chỉnh chiều cao trên mobile */
+  .u2-chat-sidebar {
+    height: 40vh;
+    min-height: 300px;
+    border-radius: 12px;
+  }
+}
+
+/* Fix lỗi hiển thị vé tàu trên màn hình quá nhỏ (iPhone SE, v.v.) */
+@media screen and (max-width: 480px) {
+  .u2-ticket {
+    margin: 15px;
+    width: calc(100% - 30px);
+  }
+  .u2-head {
+    padding: 20px;
+  }
+  .u2-wordmark {
+    font-size: 28px;
+  }
+  .u2-otp-box {
+    width: 38px;
+    height: 46px;
+    font-size: 18px;
+  }
+}
