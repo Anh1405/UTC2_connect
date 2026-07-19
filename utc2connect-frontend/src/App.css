@@ -681,16 +681,6 @@
 }
 .ctrl-btn.stop:hover { box-shadow: 0 10px 24px rgba(198,73,63,0.55); }
 
-.ctrl-btn.report {
-  background: rgba(255,255,255,0.14);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 11px 20px;
-  box-shadow: none;
-}
-.ctrl-btn.report:hover { background: rgba(255,255,255,0.24); box-shadow: none; }
-
 /* HỘP CHAT VĂN BẢN BÊN PHẢI */
 .u2-chat-sidebar {
   background: var(--fb-card);
@@ -858,51 +848,104 @@
 /* ==========================================================
    BỔ SUNG 1: HIỆU ỨNG HOẠT HỌA ĐOÀN TÀU CHẠY (TRAIN SEARCHING)
    ========================================================== */
-.searching-train-container {
-  display: flex;
-  flex-direction: column;
+/* ===== BẢNG GA ĐIỆN TỬ UTC2 ===== */
+.u2-departure-board {
+  display: flex; flex-direction: column;
+  width: 100%; height: 100%;
+  padding: 24px;
+  background:
+    radial-gradient(ellipse at top, rgba(255,180,0,0.06), transparent 60%),
+    var(--navy);
+  box-sizing: border-box;
   justify-content: center;
+  gap: 22px;
+}
+
+.u2-board-header {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 11px; letter-spacing: 0.12em;
+  color: var(--ink-muted);
+  border-bottom: 1px dashed rgba(255,255,255,0.15);
+  padding-bottom: 10px;
+}
+.u2-board-live {
+  color: var(--amber);
+  animation: u2-blink 1.4s ease-in-out infinite;
+}
+@keyframes u2-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.u2-board-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
   align-items: center;
-  height: 100%;
-  width: 100%;
+  gap: 10px;
+}
+.u2-board-label {
+  font-size: 10px; color: var(--ink-muted); letter-spacing: 0.08em;
+}
+.u2-board-flip {
+  background: #000;
+  color: var(--amber);
+  font-size: 15px; font-weight: 700; letter-spacing: 0.06em;
+  padding: 6px 10px;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px rgba(255,180,0,0.25);
+  text-shadow: 0 0 6px rgba(255,180,0,0.5);
 }
 
-.train-animation-wrapper {
+.u2-station-scene {
   position: relative;
-  width: 280px;
-  height: 45px;
+  width: 100%;
+  height: 130px;
+  border-radius: 14px;
   overflow: hidden;
-  margin-bottom: 16px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+}
+.u2-scene-bg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
-.train-icon {
-  font-size: 26px;
+.u2-train-wrapper {
   position: absolute;
-  white-space: nowrap;
-  animation: runTrain 2.8s linear infinite;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
-
-.railway-line {
+.u2-train-img {
   position: absolute;
-  bottom: 4px; left: 0; width: 100%; height: 2px;
-  background: repeating-linear-gradient(90deg, rgba(255,255,255,0.2), rgba(255,255,255,0.2) 10px, transparent 10px, transparent 20px);
+  bottom: 14px;
+  left: 0;
+  width: 150px;
+  height: auto;
+  /* Đổi vị trí bắt đầu mặc định sang bên phải */
+  transform: translateX(420px);
+  animation: u2-train-move 4.2s linear infinite;
+  filter: drop-shadow(0 6px 10px rgba(0,0,0,0.4));
 }
 
-.train-loading-text {
+@keyframes u2-train-move {
+  /* Bắt đầu từ ngoài mép phải (420px) và chạy hút về bên trái (-180px) */
+  from { transform: translateX(420px); }
+  to   { transform: translateX(-180px); }
+}
+
+
+.u2-board-status {
+  text-align: center;
   font-size: 13.5px;
   color: #a5b4fc;
   font-weight: 500;
-  animation: pulseText 1.6s ease-in-out infinite;
+  margin: 0;
 }
-
-@keyframes runTrain {
-  0% { transform: translateX(-120px); }
-  100% { transform: translateX(290px); }
+.u2-dots {
+  display: inline-block;
+  animation: u2-dots-pulse 1.4s steps(4) infinite;
+  width: 1.2em; overflow: hidden; white-space: nowrap;
 }
-
-@keyframes pulseText {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
+@keyframes u2-dots-pulse {
+  0% { width: 0; } 100% { width: 1.2em; }
 }
 
 /* ==========================================================
@@ -1113,3 +1156,107 @@
 .filter-beauty video { filter: contrast(1.04) brightness(1.12) saturate(1.04); }
 .filter-vintage video { filter: sepia(0.4) contrast(0.9) hue-rotate(-5deg); }
 .filter-bw video { filter: grayscale(1) contrast(1.15); }
+/* ===== MODAL BÁO CÁO VI PHẠM ===== */
+.u2-report-overlay {
+  position: fixed; inset: 0;
+  background: rgba(16, 27, 51, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;                 /* 👈 đảm bảo không dính sát mép màn hình */
+  box-sizing: border-box;
+  z-index: 1000;
+  animation: u2-fade-in 0.15s ease;
+}
+@keyframes u2-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+.u2-report-ticket {
+  width: 380px;
+  max-width: 100%;
+  max-height: 88vh;              /* 👈 chốt chặn không cho cao hơn màn hình */
+  display: flex;
+  flex-direction: column;        /* header / body / footer xếp dọc, body co giãn */
+  background: var(--navy);
+  border-radius: 18px;
+  box-shadow: 0 24px 60px -20px rgba(16,27,51,0.6);
+  overflow: hidden;
+  animation: u2-pop-in 0.18s ease;
+}
+@keyframes u2-pop-in {
+  from { transform: scale(0.94) translateY(6px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.u2-report-head {
+  flex-shrink: 0;                /* 👈 luôn hiển thị, không bị co lại */
+  position: relative;
+  padding: 16px 20px 12px;
+  background: var(--navy-light);
+  border-bottom: 2px dashed rgba(255,255,255,0.15);
+}
+.u2-report-close {
+  position: absolute; top: 12px; right: 16px;
+  background: none; border: none; color: var(--ink-muted);
+  font-size: 16px; cursor: pointer;
+}
+
+.u2-report-body {
+  flex: 1 1 auto;
+  min-height: 0;                 /* 👈 bắt buộc để overflow-y hoạt động trong flex */
+  overflow-y: auto;              /* 👈 nội dung dài thì cuộn ở đây, không kéo dài cả modal */
+  background: var(--paper);
+  padding: 16px 20px;
+}
+
+.u2-report-evidence {
+  margin-bottom: 12px;
+  position: relative;
+  background: #000;              /* 👈 nền đen lấp khoảng trống khi ảnh không vừa khung */
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(16,27,51,0.25);
+}
+.u2-report-evidence img {
+  width: 100%;
+  max-height: 240px;             /* 👈 tăng nhẹ để ảnh dọc (selfie) không bị bóp quá nhỏ */
+  object-fit: contain;           /* 👈 đổi từ cover -> contain: xem được TOÀN BỘ ảnh, không cắt */
+  display: block;
+  margin: 0 auto;                /* căn giữa nếu ảnh hẹp hơn khung */
+}
+.u2-report-evidence span {
+  position: absolute; bottom: 8px; left: 8px;
+  background: rgba(16,27,51,0.75); color: #fff;
+  font-size: 10.5px; padding: 3px 8px; border-radius: 6px;
+}
+
+.u2-report-reasons {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+.u2-reason-chip {
+  display: flex; align-items: center; gap: 6px;
+  padding: 9px 10px; font-size: 12.5px; text-align: left;
+  border-radius: 10px; border: 1.5px solid var(--fb-divider);
+  background: #fff; color: var(--ink); cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.u2-reason-chip.active {
+  border-color: var(--red);
+  background: rgba(198,73,63,0.08);
+  color: var(--red);
+  font-weight: 600;
+}
+
+.u2-report-footer {
+  flex-shrink: 0;                /* 👈 luôn hiển thị dưới cùng */
+  display: flex; gap: 10px;
+  padding: 14px 20px 18px;
+  background: var(--paper);
+  border-top: 1px solid var(--fb-divider);
+}
+.u2-report-footer .u2-btn { flex: 1; }
+.u2-report-footer .u2-btn.primary { background: var(--red); }
+.u2-report-footer .u2-btn.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.u2-report-done {
+  padding: 40px 20px; text-align: center; background: var(--paper);
+}
+.u2-report-done-icon { font-size: 40px; margin-bottom: 8px; }

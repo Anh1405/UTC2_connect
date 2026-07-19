@@ -3,6 +3,7 @@ package com.utc2connect.config;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.utc2connect.entity.Report;
+import com.utc2connect.entity.User;
 import com.utc2connect.repository.ReportRepository;
 import com.utc2connect.repository.userRepository;
 import lombok.Data;
@@ -11,6 +12,8 @@ import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+
+import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Component
@@ -20,6 +23,7 @@ public class SocketHandler {
     private final ReportRepository reportRepository; // ✨ THÊM BIẾN NÀY
 
     private final ConcurrentLinkedQueue<SocketIOClient> waitingUsers = new ConcurrentLinkedQueue<>();
+    private final java.util.concurrent.ConcurrentHashMap<java.util.UUID, String> sessionUsernames = new java.util.concurrent.ConcurrentHashMap<>();
     private final java.util.concurrent.ConcurrentHashMap<java.util.UUID, String> activeRooms = new java.util.concurrent.ConcurrentHashMap<>();
     private final userRepository userRepo;
     private final java.util.concurrent.ConcurrentHashMap<String, Long> roomStartTimes = new java.util.concurrent.ConcurrentHashMap<>();
@@ -42,7 +46,7 @@ public class SocketHandler {
         server.addDisconnectListener(client -> {
             // Xóa khỏi hàng đợi (nếu đang chờ)
             waitingUsers.remove(client);
-
+            sessionUsernames.remove(client.getSessionId());
             // Dò trong sổ xem người này có đang trong phòng gọi nào không
             String roomID = activeRooms.remove(client.getSessionId());
             if (roomID != null) {
@@ -53,11 +57,12 @@ public class SocketHandler {
 
         // BƯỚC 3: XỬ LÝ HÀNG ĐỢI KẾT NỐI NGẪU NHIÊN
         server.addEventListener("join_matchmaking", String.class, (client, data, ackSender) -> {
+            sessionUsernames.put(client.getSessionId(), data); // 👈 LƯU username theo sessionId
+
             if (!waitingUsers.contains(client)) {
                 waitingUsers.add(client);
             }
 
-            // Nếu đủ 2 người trở lên thì bắt cặp
             if (waitingUsers.size() >= 2) {
                 SocketIOClient peer1 = waitingUsers.poll();
                 SocketIOClient peer2 = waitingUsers.poll();
@@ -66,15 +71,16 @@ public class SocketHandler {
                     String roomID = "room_" + peer1.getSessionId() + "_" + peer2.getSessionId();
                     activeRooms.put(peer1.getSessionId(), roomID);
                     activeRooms.put(peer2.getSessionId(), roomID);
-                    // Cho 2 người vào cùng 1 phòng ngẫu nhiên
                     peer1.joinRoom(roomID);
                     peer2.joinRoom(roomID);
 
-                    // Gửi thông tin về cho 2 bên (Bên 1 chủ động gọi, Bên 2 đợi nhận)
-                    peer1.sendEvent("matched", new MatchedPayload(roomID, true));
-                    peer2.sendEvent("matched", new MatchedPayload(roomID, false));
+                    String user1 = sessionUsernames.get(peer1.getSessionId());
+                    String user2 = sessionUsernames.get(peer2.getSessionId());
 
-                    System.out.println("Đã bắt cặp thành công phòng: " + roomID);
+                    // 👇 Mỗi bên nhận username của ĐỐI PHƯƠNG, không phải của chính mình
+                    peer1.sendEvent("matched", new MatchedPayload(roomID, true, user2));
+                    peer2.sendEvent("matched", new MatchedPayload(roomID, false, user1));
+
                     roomStartTimes.put(roomID, System.currentTimeMillis());
                 }
             }
@@ -124,13 +130,19 @@ public class SocketHandler {
         // BƯỚC 6: XỬ LÝ BÁO CÁO VI PHẠM (CẬP NHẬT LƯU FILE ẢNH)
         server.addEventListener("report_user", ReportPayload.class, (client, data, ackSender) -> {
             String reporterUsername = data.getReporterUsername();
+            var reporterOpt = userRepo.findByUsername(reporterUsername);
 
-            userRepo.findByUsername(reporterUsername).ifPresent(reporter -> {
-                Report newReport = new Report();
-                newReport.setRoomID(data.getRoomID());
-                newReport.setReason(data.getReason());
-                newReport.setReporter(reporter);
-                newReport.setReporterUsername(reporter.getUsername());
+            if (reporterOpt.isEmpty()) {
+                client.sendEvent("report_result", Map.of("success", false, "message", "Không xác định được tài khoản của bạn."));
+                return;
+            }
+
+            User reporter = reporterOpt.get();
+            Report newReport = new Report();
+            newReport.setRoomID(data.getRoomID());
+            newReport.setReason(data.getReason());
+            newReport.setReporter(reporter);
+            newReport.setReporterUsername(reporter.getUsername());
 
                 // ---- LOGIC XỬ LÝ ẢNH BASE64 SANG FILE VẬT LÝ ----
                 String base64String = data.getScreenshotBase64();
@@ -167,19 +179,23 @@ public class SocketHandler {
                 // Lưu đường dẫn ảnh vào entity
                 newReport.setScreenshotUrl(savedImagePath);
                 // ------------------------------------------------
-
-                // Tìm và gán người bị tố cáo (nếu có)
                 if (data.getReportedUsername() != null && !data.getReportedUsername().isEmpty()) {
                     userRepo.findByUsername(data.getReportedUsername()).ifPresent(reported -> {
-                        newReport.setReporter(reported);
-                        newReport.setReporterUsername(reported.getUsername());
+                        newReport.setReported(reported);                    // ✅ sửa: reported, không phải reporter
+                        newReport.setReportedUsername(reported.getUsername()); // ✅ sửa
                     });
                 }
 
+            try {
                 reportRepository.save(newReport);
-                System.out.println("✅ ĐÃ LƯU BÁO CÁO TỪ [" + reporter.getUsername() + "] KÈM ẢNH CHỨNG CỨ: " + savedImagePath);
+                System.out.println("✅ ĐÃ LƯU BÁO CÁO TỪ [" + reporter.getUsername() + "]");
+                client.sendEvent("report_result", Map.of("success", true, "message", "Đã lưu thành công"));
+            } catch (Exception e) {
+                System.out.println("❌ Lỗi khi lưu report vào DB: " + e.getMessage());
+                client.sendEvent("report_result", Map.of("success", false, "message", "Lỗi hệ thống, vui lòng thử lại."));
+            }
             });
-        });
+
         server.start();
     }
 
@@ -192,14 +208,17 @@ public class SocketHandler {
     public static class MatchedPayload {
         private String roomID;
         private boolean isInitiator;
+        private String opponentUsername; // 👈 THÊM
 
-        public MatchedPayload(String roomID, boolean isInitiator) {
+        public MatchedPayload(String roomID, boolean isInitiator, String opponentUsername) {
             this.roomID = roomID;
             this.isInitiator = isInitiator;
+            this.opponentUsername = opponentUsername;
         }
 
         public String getRoomID() { return roomID; }
         public boolean getIsInitiator() { return isInitiator; }
+        public String getOpponentUsername() { return opponentUsername; }
     }
 
     public static class WebRTCPayload {
