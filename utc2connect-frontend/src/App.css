@@ -855,3 +855,261 @@
     font-size: 18px;
   }
 }
+/* ==========================================================
+   BỔ SUNG 1: HIỆU ỨNG HOẠT HỌA ĐOÀN TÀU CHẠY (TRAIN SEARCHING)
+   ========================================================== */
+.searching-train-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+.train-animation-wrapper {
+  position: relative;
+  width: 280px;
+  height: 45px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.train-icon {
+  font-size: 26px;
+  position: absolute;
+  white-space: nowrap;
+  animation: runTrain 2.8s linear infinite;
+}
+
+.railway-line {
+  position: absolute;
+  bottom: 4px; left: 0; width: 100%; height: 2px;
+  background: repeating-linear-gradient(90deg, rgba(255,255,255,0.2), rgba(255,255,255,0.2) 10px, transparent 10px, transparent 20px);
+}
+
+.train-loading-text {
+  font-size: 13.5px;
+  color: #a5b4fc;
+  font-weight: 500;
+  animation: pulseText 1.6s ease-in-out infinite;
+}
+
+@keyframes runTrain {
+  0% { transform: translateX(-120px); }
+  100% { transform: translateX(290px); }
+}
+
+@keyframes pulseText {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* ==========================================================
+   BỔ SUNG 2: BỘ LỌC CAMERA (BEAUTY & VINTAGE CSS FILTERS)
+   ========================================================== */
+.camera-filters-zone {
+  margin: 20px 8px 0;
+  padding: 12px;
+  background: rgba(16, 27, 51, 0.04);
+  border: 1px solid var(--fb-divider, #e1e6ef);
+  border-radius: 10px;
+}
+
+.filter-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-muted, #6b7285);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.filter-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.filter-btn {
+  background: var(--fb-card, #fff);
+  border: 1px solid var(--fb-divider, #e1e6ef);
+  color: var(--fb-text, #101b33);
+  padding: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.filter-btn:hover { background: var(--fb-hover, #eaf0fb); }
+.filter-btn.active {
+  background: var(--fb-blue, #1d63D1);
+  color: #fff;
+  border-color: var(--fb-blue, #1d63D1);
+}
+
+/* Áp dụng filter trực tiếp lên video thẻ local-video */
+.video-box.local-video video {
+  transition: filter 0.3s ease;
+}
+.local-video.filter-none video { filter: none; }
+.local-video.filter-beauty video { filter: contrast(1.04) brightness(1.12) saturate(1.04); }
+.local-video.filter-vintage video { filter: sepia(0.4) contrast(0.9) hue-rotate(-5deg); }
+.local-video.filter-bw video { filter: grayscale(1) contrast(1.15); }
+
+/* ==========================================================
+   BỔ SUNG 3: ĐÈ LÊN LAYOUT (PIP & SPLIT) ĐỂ CHUYỂN ĐỔI MƯỢT MÀ
+   ========================================================== */
+.u2-video-container {
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Nút chuyển đổi giao diện góc màn hình */
+.layout-toggle-btn {
+  position: absolute;
+  top: 10px; right: 10px; z-index: 7;
+  background: rgba(16, 27, 51, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #fff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.layout-toggle-btn:hover { background: var(--amber, #ffb400); color: #101b33; }
+
+/* Cấu hình lại layout Split song song bằng Grid */
+.u2-video-container.layout-split {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  grid-template-rows: 1fr !important;
+  gap: 12px !important;
+  padding: 16px !important;
+  padding-bottom: 98px !important;
+  box-sizing: border-box !important;
+}
+
+.u2-video-container.layout-split .remote-video {
+  position: relative !important;
+  inset: auto !important;
+  height: 100% !important;
+  width: 100% !important;
+  border-radius: 12px !important;
+}
+
+.u2-video-container.layout-split .local-video {
+  position: relative !important;
+  inset: auto !important;
+  height: 100% !important;
+  width: 100% !important;
+  border-radius: 12px !important;
+  border: 2px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: none !important;
+}
+/* ==========================================================
+   BỘ LỌC CAMERA: NÚT TRÒN NỔI ĐỔI MÀU KIỂU AZAR
+   ========================================================== */
+.azar-filter-wrapper {
+  position: absolute;
+  left: 16px;
+  bottom: 98px; /* Nằm ngay phía trên thanh controls */
+  z-index: 15;
+}
+
+/* Cục tròn đổi màu liên tục */
+.azar-magic-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  color: white;
+  
+  /* Tạo hiệu ứng dải màu chuyển động */
+  background: linear-gradient(45deg, #ff0080, #ff8c00, #40e0d0, #ff0080);
+  background-size: 300% 300%;
+  animation: magicColor 3s ease infinite;
+  transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.azar-magic-btn:hover {
+  transform: scale(1.1);
+  border-color: #fff;
+}
+
+/* Keyframes cho hiệu ứng đổi màu Gradient */
+@keyframes magicColor {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Bảng menu filter nổi lên trên */
+.azar-filter-menu {
+  position: absolute;
+  bottom: 60px; /* Cách nút tròn một chút */
+  left: 0;
+  background: rgba(16, 27, 51, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 120px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  
+  /* Hiệu ứng nảy nhẹ khi mở */
+  animation: popUpMenu 0.25s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  transform-origin: bottom left;
+}
+
+@keyframes popUpMenu {
+  from { opacity: 0; transform: scale(0.8) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.azar-filter-menu button {
+  background: transparent;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.azar-filter-menu button:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Khi filter được chọn */
+.azar-filter-menu button.active {
+  background: var(--amber); /* Màu vàng vé tàu */
+  color: var(--navy);
+  font-weight: 700;
+}
+
+/* Áp dụng filter trực tiếp lên video cho cả mình và người lạ */
+.video-box video {
+  transition: filter 0.3s ease;
+}
+.filter-none video { filter: none; }
+.filter-beauty video { filter: contrast(1.04) brightness(1.12) saturate(1.04); }
+.filter-vintage video { filter: sepia(0.4) contrast(0.9) hue-rotate(-5deg); }
+.filter-bw video { filter: grayscale(1) contrast(1.15); }

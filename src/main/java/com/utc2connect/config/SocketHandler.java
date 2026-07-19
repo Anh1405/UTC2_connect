@@ -113,6 +113,14 @@ public class SocketHandler {
             // Gửi tiếp dữ liệu chat tới thiết bị còn lại trong phòng (loại trừ người gửi)
             server.getRoomOperations(data.getRoomID()).sendEvent("receive_message", client, data);
         });
+        server.addEventListener("send_filter", FilterPayload.class, (client, data, ackSender) -> {
+            // Lặp qua những người trong phòng và CHỈ gửi cho người còn lại (khác SessionId)
+            for (var c : server.getRoomOperations(data.getRoomID()).getClients()) {
+                if (!c.getSessionId().equals(client.getSessionId())) {
+                    c.sendEvent("receive_filter", data);
+                }
+            }
+        });
         // BƯỚC 6: XỬ LÝ BÁO CÁO VI PHẠM (CẬP NHẬT LƯU FILE ẢNH)
         server.addEventListener("report_user", ReportPayload.class, (client, data, ackSender) -> {
             String reporterUsername = data.getReporterUsername();
@@ -226,6 +234,11 @@ public class SocketHandler {
         private String reporterUsername;
         private String reportedUsername;
         private String screenshotBase64; // ✨ Nhận ảnh từ Frontend gửi lên
+    }
+    @Data
+    public static class FilterPayload {
+        private String roomID;
+        private String filterType;
     }
 
 }

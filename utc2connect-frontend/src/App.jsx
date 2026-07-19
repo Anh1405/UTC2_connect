@@ -47,7 +47,10 @@ function App() {
   const localStream = useRef(null);
   const currentRoomID = useRef(null); 
   const pendingCandidates = useRef([]);
-
+  // state quản lý bộ lọc camera vào phần khai báo state đầu component App() của bạn:
+  const [cameraFilter, setCameraFilter] = useState('none');
+  const [remoteFilter, setRemoteFilter] = useState('none');
+  const [showFilters, setShowFilters] = useState(false);
   // 1. Tự động soát vé lại khi F5 trang web nếu có token
   useEffect(() => {
     const savedToken = localStorage.getItem('token');
@@ -209,7 +212,11 @@ useEffect(() => {
       handleStartSearching();
       setChatMessages(prev => [...prev, { sender: 'system', text: 'Hệ thống: Bạn học đã rời phòng.' }]);
     });
-
+    socket.on('receive_filter', (data) => {
+      if (data && data.filterType) {
+        setRemoteFilter(data.filterType);
+      }
+    });
     return () => {
       socket.off('matched');
       socket.off('receive_offer');
@@ -217,6 +224,7 @@ useEffect(() => {
       socket.off('receive_ice_candidate');
       socket.off('receive_message');
       socket.off('peer_disconnected');
+      socket.off('receive_filter');
     };
   }, [loginSuccess]);
 
@@ -420,7 +428,12 @@ const handleReportUser = () => {
     setLoading(false);
   }
 };
-
+const handleFilterChange = (type) => {
+    setCameraFilter(type); 
+    if (roomID) {
+      socket.emit('send_filter', { roomID: roomID, filterType: type });
+    }
+  };
   // Xử lý Đăng xuất
   const handleLogout = () => {
     resetCurrentCall();
@@ -466,151 +479,197 @@ const handleReportUser = () => {
   };
 
   return (
-    <div className="u2-page">
-    {loginSuccess ? (
-      <div className="u2-home-layout">
-        {/* THANH ĐIỀU HƯỚNG TRÊN CÙNG */}
-        <div className="u2-navbar">
-          <div className="u2-nav-logo">UTC2 CONNECT</div>
-          <div className="u2-user-pill">
-            <span className="u2-user-name">● {userData?.username} (Trực tuyến)</span>
-            <button className="u2-logout-btn" onClick={handleLogout}>Đăng xuất</button>
+  <div className="u2-page">
+  {loginSuccess ? (
+    <div className="u2-home-layout">
+      {/* THANH ĐIỀU HƯỚNG TRÊN CÙNG */}
+      <div className="u2-navbar">
+        <div className="u2-nav-logo">UTC2 CONNECT</div>
+        <div className="u2-user-pill">
+          <span className="u2-user-name">● {userData?.username} (Trực tuyến)</span>
+          <button className="u2-logout-btn" onClick={handleLogout}>Đăng xuất</button>
+        </div>
+      </div>
+
+      {/* CỘT 1: THANH BÊN TRÁI (SIDEBAR) */}
+      <div className="u2-sidebar">
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--fb-muted)', padding: '0 12px 8px' }}>Tính năng</div>
+        <div className="u2-menu-item active">📹 Chuyến tàu ngẫu nhiên</div>
+        <div className="u2-menu-item">🛒 Chợ cũ sinh viên</div>
+        <div className="u2-menu-item">🏢 Tìm phòng trọ / Ở ghép</div>
+        
+        {/* Đã xóa trắng phần bộ lọc camera ở đây */}
+
+        <div style={{ height: 20 }} />
+        <div style={{ padding: '0 12px', fontSize: 12, color: 'var(--ink-muted)' }}>
+          Lưu ý: Tuân thủ quy tắc ứng xử cộng đồng sinh viên. Mọi hành vi phản cảm sẽ bị khóa tài khoản vĩnh viễn.
+        </div>
+      </div>
+
+      {/* CỘT 2 & 3: KHÔNG GIAN VIDEO CALL VÀ CHAT */}
+      <div className="u2-main-content call-mode">
+        {/* Dynamic class tương ứng với chế độ hiển thị pip hoặc split */}
+        <div className={`u2-video-container layout-${videoLayout}`}>
+          <button
+            className="layout-toggle-btn"
+            onClick={() => setVideoLayout(videoLayout === 'pip' ? 'split' : 'pip')}
+          >
+            {videoLayout === 'pip' ? '🔲 Chia đôi toa tàu' : '🔳 Chế độ thu nhỏ (PiP)'}
+          </button>
+
+          {/* Khung video người lạ (Hành khách bí ẩn) */}
+          <div className={`video-box remote-video filter-${remoteFilter}`}>
+            {!isSearching && !isConnected && (
+              <div className="video-placeholder">
+                <h3>Sẵn sàng lên chuyến tàu UTC2?</h3>
+                <p>Nhấn nút "Bắt đầu hành trình" bên dưới để ghép phòng cùng một bạn học ẩn danh.</p>
+              </div>
+            )}
+            
+            {/* HIỆU ỨNG ĐOÀN TÀU CHẠY THAY SPINNER */}
+            {isSearching && (
+              <div className="video-placeholder searching-train-container">
+                <div className="train-animation-wrapper">
+                  <div className="train-icon">🚂🚃🚃</div>
+                  <div className="railway-line"></div>
+                </div>
+                <p className="train-loading-text">Đang xếp bạn lên toa tàu cùng một hành khách bí ẩn...</p>
+              </div>
+            )}
+            
+            {isConnected && (
+              <div className="video-element-wrapper">
+                <div className="video-tag">Hành khách bí ẩn</div>
+                <video 
+                  ref={remoteVideoRef} 
+                  autoPlay 
+                  playsInline 
+                  style={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    objectFit: 'cover',
+                    transform: 'scaleX(-1)'
+                  }} 
+                />
+              </div>
+            )}
           </div>
+
+          {/* Khung video của chính mình (Local Video) kèm Filter Class */}
+          <div className={`video-box local-video filter-${cameraFilter}`}>
+            <div className="video-tag">Bạn ({userData?.username})</div>
+            <video 
+              ref={localVideoRef} 
+              autoPlay 
+              muted 
+              playsInline 
+              style={{ 
+                width: '100%', 
+                height: '100%', 
+                objectFit: 'cover',
+                transform: 'scaleX(-1)'
+              }} 
+            />            
+          </div>
+
+          {/* Thanh điều khiển cuộc gọi */}
+          <div className="video-controls">
+            {!isSearching && !isConnected && (
+              <button className="ctrl-btn start" onClick={handleStartSearching}>
+                🚂 Bắt đầu hành trình
+              </button>
+            )}
+
+            {isSearching && !isConnected && (
+              <button className="ctrl-btn stop" onClick={handleStopSearching}>
+                Xuống tàu / Dừng tìm
+              </button>
+            )}
+
+            {isConnected && (
+              <>
+                <button className="ctrl-btn stop" onClick={handleEndCall} style={{ backgroundColor: '#6c757d', marginRight: '10px' }}>
+                  Rời toa tàu
+                </button>
+                
+                <button className="ctrl-btn stop" onClick={handleReportUser} style={{ backgroundColor: '#dc3545', marginRight: '10px' }}>
+                  🚨 Tố cáo vi phạm
+                </button>
+                
+                <button className="ctrl-btn next" onClick={handleNextUser}>
+                  Đổi toa / Tìm người khác
+                </button>
+              </>
+            )}
+          </div>
+          {/* Nút cục tròn đổi màu kiểu Azar (Đặt bên trong u2-video-container) */}
+<div className="azar-filter-wrapper">
+  {/* Nút tròn nổi */}
+  <button 
+    className="azar-magic-btn" 
+    onClick={() => setShowFilters(!showFilters)}
+    title="Chỉnh màu Camera"
+  >
+    ✨
+  </button>
+
+  {/* Menu xổ lên khi bấm vào nút */}
+  {showFilters && (
+    <div className="azar-filter-menu">
+      <button 
+        className={cameraFilter === 'none' ? 'active' : ''} 
+        onClick={() => handleFilterChange('none')}
+      >
+        Gốc
+      </button>
+      <button 
+        className={cameraFilter === 'beauty' ? 'active' : ''} 
+        onClick={() => handleFilterChange('beauty')}
+      >
+        Làm mịn da
+      </button>
+      <button 
+        className={cameraFilter === 'vintage' ? 'active' : ''} 
+        onClick={() => handleFilterChange('vintage')}
+      >
+        Hoài cổ
+      </button>
+      <button 
+        className={cameraFilter === 'bw' ? 'active' : ''} 
+        onClick={() => handleFilterChange('bw')}
+      >
+        Đen trắng
+      </button>
+    </div>
+  )}
+</div>
         </div>
 
-        {/* CỘT 1: THANH BÊN TRÁI (SIDEBAR) */}
-        <div className="u2-sidebar">
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--fb-muted)', padding: '0 12px 8px' }}>Tính năng</div>
-          <div className="u2-menu-item active">📹 Video Call ngẫu nhiên</div>
-          <div className="u2-menu-item">🛒 Chợ cũ sinh viên</div>
-          <div className="u2-menu-item">🏢 Tìm phòng trọ / Ở ghép</div>
-          <div style={{ height: 20 }} />
-          <div style={{ padding: '0 12px', fontSize: 12, color: 'var(--ink-muted)' }}>
-            Lưu ý: Tuân thủ quy tắc ứng xử cộng đồng sinh viên. Mọi hành vi phản cảm sẽ bị khóa tài khoản vĩnh viễn.
+        {/* CỘT CHAT VĂN BẢN ĐI KÈM CẠNH VIDEO */}
+        <div className="u2-chat-sidebar">
+          <div className="chat-header">💬 Trò chuyện trên toa</div>
+          <div className="chat-messages">
+            {chatMessages.map((msg, index) => (
+              <div key={index} className={`chat-bubble ${msg.sender}`}>
+                {msg.text}
+              </div>
+            ))}
           </div>
-        </div>
-
-        {/* CỘT 2 & 3: KHÔNG GIAN VIDEO CALL VÀ CHAT */}
-        <div className="u2-main-content call-mode">
-          <div className={`u2-video-container ${videoLayout === 'split' ? 'split-mode' : ''}`}>
-            <button
-              className="layout-toggle-btn"
-              onClick={() => setVideoLayout(videoLayout === 'pip' ? 'split' : 'pip')}
-            >
-              {videoLayout === 'pip' ? 'Chia đôi màn hình' : 'Chế độ thu nhỏ'}
-            </button>
-
-            {/* Khung video người lạ */}
-            <div className="video-box remote-video">
-              {!isSearching && !isConnected && (
-                <div className="video-placeholder">
-                  <h3>Sẵn sàng kết nối bạn bè UTC2?</h3>
-                  <p>Nhấn nút "Tìm kiếm bạn bè" bên dưới để bắt đầu video call ngẫu nhiên.</p>
-                </div>
-              )}
-              {isSearching && (
-                <div className="video-placeholder searching">
-                  <div className="spinner"></div>
-                  <p>Đang tìm kiếm sinh viên ngẫu nhiên...</p>
-                </div>
-              )}
-              {isConnected && (
-                <div className="video-element-wrapper">
-                  <div className="video-tag">Bạn học ẩn danh</div>
-                  {/* Bỏ comment và gắn thẻ video thật vào đây */}
-{/* Khung video người lạ */}
-<video 
-  ref={remoteVideoRef} 
-  autoPlay 
-  playsInline 
-  style={{ 
-    width: '100%', 
-    height: '100%', 
-    objectFit: 'cover',
-    transform: 'scaleX(-1)' /* ✨ THÊM DÒNG NÀY ĐỂ LẬT HÌNH ẢNH CỦA ĐỐI PHƯƠNG */
-  }} 
-/>                </div>
-              )}
-            </div>
-
-            {/* Khung video của chính mình */}
-            <div className="video-box local-video">
-              <div className="video-tag">Bạn ({userData?.username})</div>
-              {/* Bỏ comment và gắn thẻ video thật vào đây */}
-<video 
-  ref={localVideoRef} 
-  autoPlay 
-  muted 
-  playsInline 
-  style={{ 
-    width: '100%', 
-    height: '100%', 
-    objectFit: 'cover',
-    transform: 'scaleX(-1)' /* ✨ THÊM DÒNG NÀY ĐỂ LẬT NHƯ SOI GƯƠNG */
-  }} 
-/>            </div>
-
-            {/* Thanh điều khiển cuộc gọi (MỚI) */}
-            <div className="video-controls">
-              {/* Trạng thái 1: Chưa làm gì cả */}
-              {!isSearching && !isConnected && (
-                <button className="ctrl-btn start" onClick={handleStartSearching}>
-                  Tìm kiếm bạn bè
-                </button>
-              )}
-
-              {/* Trạng thái 2: Đang xoay chờ tìm người */}
-              {isSearching && !isConnected && (
-                <button className="ctrl-btn stop" onClick={handleStopSearching}>
-                  Dừng tìm kiếm
-                </button>
-              )}
-
-              {/* Trạng thái 3: Đã kết nối thành công (Hiện 3 nút) */}
-              {isConnected && (
-                <>
-                  <button className="ctrl-btn stop" onClick={handleEndCall} style={{ backgroundColor: '#6c757d', marginRight: '10px' }}>
-                    Kết thúc
-                  </button>
-                  
-                  {/* THÊM NÚT BÁO CÁO VÀO ĐÂY */}
-                  <button className="ctrl-btn stop" onClick={handleReportUser} style={{ backgroundColor: '#dc3545', marginRight: '10px' }}>
-                    🚨 Báo cáo
-                  </button>
-                  
-                  <button className="ctrl-btn next" onClick={handleNextUser}>
-                    Bỏ qua / Tìm người khác
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* CỘT CHAT VĂN BẢN ĐI KÈM CẠNH VIDEO */}
-          <div className="u2-chat-sidebar">
-            <div className="chat-header">💬 Hộp trò chuyện</div>
-            <div className="chat-messages">
-              {chatMessages.map((msg, index) => (
-                <div key={index} className={`chat-bubble ${msg.sender}`}>
-                  {msg.text}
-                </div>
-              ))}
-            </div>
-            <div className="chat-input-area">
-              <input 
-                type="text" 
-                placeholder="Nhập tin nhắn..." 
-                disabled={!isConnected} 
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-              />
-              <button disabled={!isConnected} onClick={handleSendMessage}>Gửi</button>
-            </div>
+          <div className="chat-input-area">
+            <input 
+              type="text" 
+              placeholder="Nhập tin nhắn..." 
+              disabled={!isConnected} 
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+            />
+            <button disabled={!isConnected} onClick={handleSendMessage}>Gửi</button>
           </div>
         </div>
       </div>
-      ) : (
+    </div>
+    ) : (
         /* GIAO DIỆN VÉ TÀU (ĐÃ GIỮ NGUYÊN HOÀN TOÀN LOGIC CỦA BẠN) */
         <div className="u2-ticket">
           <div className="u2-head">
