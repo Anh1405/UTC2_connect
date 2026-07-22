@@ -3,10 +3,16 @@ import axios from 'axios';
 import io from 'socket.io-client'; // Thêm thư viện socket.io-client
 import './App.css';
 import * as toxicity from '@tensorflow-models/toxicity';
+import EmojiPicker, { Categories } from 'emoji-picker-react';
+import { Grid } from '@giphy/react-components';
+import { GiphyFetch } from '@giphy/js-fetch-api';
+import DOMPurify from 'dompurify';
 
-// Kết nối tới cổng 8081 của Spring Boot SocketIO Server
-// Tự động lấy "localhost" hoặc "192.168.1.17" từ thanh địa chỉ trình duyệt, rồi ghép với cổng 8081
-const socket = io('/', { 
+// Khởi tạo Giphy API (Nên dùng key của riêng bạn)
+const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_KEY);
+const backendUrl = `http://${window.location.hostname}:8081`;
+
+const socket = io(backendUrl, { 
   autoConnect: false,
   transports: ['websocket']
 });
@@ -18,6 +24,7 @@ function App() {
   const [isSearching, setIsSearching] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [videoLayout, setVideoLayout] = useState('pip');
+  const [isFullScreen, setIsFullScreen] = useState(false);
   const [mode, setMode] = useState('login'); 
 
   // Form Đăng ký, Đăng nhập & Quên mật khẩu
@@ -48,6 +55,7 @@ function App() {
   const localStream = useRef(null);
   const currentRoomID = useRef(null); 
   const pendingCandidates = useRef([]);
+  const autoSearchTimeoutRef = useRef(null);
   // state quản lý bộ lọc camera vào phần khai báo state đầu component App() của bạn:
   const [cameraFilter, setCameraFilter] = useState('none');
   const [remoteFilter, setRemoteFilter] = useState('none');
@@ -63,6 +71,19 @@ const [reportScreenshot, setReportScreenshot] = useState(null);
 const [reportStatus, setReportStatus] = useState('idle'); // idle | sending | done
 const [remoteUsername, setRemoteUsername] = useState(null);
 const [searchElapsed, setSearchElapsed] = useState(0);
+const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+const [showGifPicker, setShowGifPicker] = useState(false);
+const [gifSearchTerm, setGifSearchTerm] = useState('');
+
+// Nếu có từ khóa thì gọi API search, nếu không có thì gọi API trending
+// Nếu có từ khóa thì gọi API search, nếu không có thì gọi API trending
+const fetchGifs = (offset) => {
+  if (gifSearchTerm.trim()) {
+    // Thêm tham số lang: 'vi' vào đây để Giphy trả kết quả theo tiếng Việt
+    return gf.search(gifSearchTerm, { offset, limit: 10, lang: 'vi' });
+  }
+  return gf.trending({ offset, limit: 10 });
+};
   // 1. Tự động soát vé lại khi F5 trang web nếu có token
   useEffect(() => {
     const savedToken = localStorage.getItem('token');
@@ -104,12 +125,18 @@ useEffect(() => {
   startLocalVideo();
 }, [loginSuccess]);
   // 2. Kích hoạt camera/mic và lắng nghe các sự kiện báo hiệu (Signaling) khi Đăng nhập thành công
-  useEffect(() => {
+ useEffect(() => {
     if (!loginSuccess) {
       socket.disconnect();
       return;
     }
 
+    // 🔒 BẢO MẬT: Lấy token và gắn vào URL Query (Dành cho Java Spring Boot)
+    const token = localStorage.getItem('token');
+    
+    // Gắn token vào query thay vì auth
+    socket.io.opts.query = { token: token };
+    
     socket.connect();
 
     socket.on('matched', async (data) => {
@@ -211,20 +238,39 @@ useEffect(() => {
       }
     });
 
-    socket.on('receive_message', (data) => {
+  socket.on('receive_message', (data) => {
       if (data && data.content) {
-        setChatMessages(prev => [...prev, { sender: 'stranger', text: data.content }]);
+        // Tự động nhận diện nếu link chứa 'giphy.com' thì ép kiểu thành GIF
+        const isGifLink = data.content.includes('giphy.com/media');
+        
+        setChatMessages(prev => [...prev, { 
+          sender: 'stranger', 
+          text: data.content,
+          type: data.type || (isGifLink ? 'gif' : 'text') // 👈 Cập nhật dòng này
+        }]);
       }
     });
 
     socket.on('peer_disconnected', () => {
-      console.log("👉 [WebRTC] Đối phương đã ngắt kết nối!");
-      resetCurrentCall();
-      setRoomID(null);
-      setIsSearching(false);
-      handleStartSearching();
-      setChatMessages(prev => [...prev, { sender: 'system', text: 'Hệ thống: Bạn học đã rời phòng.' }]);
-    });
+  if (!currentRoomID.current) return;
+
+  console.log("👉 [WebRTC] Đối phương đã ngắt kết nối!");
+  resetCurrentCall();
+  setRoomID(null);
+  currentRoomID.current = null;
+  
+  setIsConnected(false);
+
+  setChatMessages(prev => [...prev, { 
+    sender: 'system', 
+    text: 'Hệ thống: Hành khách kia đã rời đi. Đang tìm chuyến mới...' 
+  }]);
+
+  // Tự động tìm lại sau 400ms
+  autoSearchTimeoutRef.current = setTimeout(() => {
+    handleStartSearching();
+  }, 400);
+});
     socket.on('receive_filter', (data) => {
       if (data && data.filterType) {
         setRemoteFilter(data.filterType);
@@ -294,39 +340,76 @@ const formatElapsed = (s) => {
   };
 
   // Phát lệnh tìm kiếm bạn bè lên Hàng đợi của Spring Boot
-  const handleStartSearching = () => {
+ const handleStartSearching = () => {
+  if (autoSearchTimeoutRef.current) {
+    clearTimeout(autoSearchTimeoutRef.current);
+  }
+
+  // Bảo vệ: không join nhiều lần
+  if (isSearching) return;
+
   setIsSearching(true);
-  socket.emit('join_matchmaking', userData?.username);   // ✅ luôn đúng, bất kể login tươi hay F5 khôi phục
+  setIsConnected(false);
+  socket.emit('join_matchmaking', userData?.username);
 };
 
-  // Hủy tìm kiếm
-  const handleStopSearching = () => {
-    setIsSearching(false);
-    // Bạn có thể viết sự kiện leave hàng đợi ở đây nếu muốn
-  };
+  // Hủy tìm kiếm (khi đang searching mà chưa match)
+const handleStopSearching = () => {
+  if (autoSearchTimeoutRef.current) {
+    clearTimeout(autoSearchTimeoutRef.current);
+  }
+  setIsSearching(false);
+  setIsConnected(false);
+  socket.emit('leave_matchmaking', userData?.username);
+};
+
+// Kết thúc cuộc gọi (rời toa tàu)
 const handleEndCall = () => {
-    resetCurrentCall();
-    if (roomID) {
-      socket.emit('disconnect_call', roomID); // Dòng này báo cho server
-    }
-    setRoomID(null);
-    setIsSearching(false);
-  };
-  // Xử lý khi bấm nút "Bỏ qua / Tìm người khác"
+  if (autoSearchTimeoutRef.current) clearTimeout(autoSearchTimeoutRef.current);
+  
+  resetCurrentCall();
+  if (roomID) {
+    socket.emit('disconnect_call', roomID);
+  }
+  
+  setRoomID(null);
+  currentRoomID.current = null;
+  setIsSearching(false);
+  setIsConnected(false);
+};
+
+// Bỏ qua / Tìm người khác (Next user)
 const handleNextUser = () => {
-    resetCurrentCall();
-    if (roomID) {
-      socket.emit('disconnect_call', roomID); // Báo cho server trước khi qua người mới
-    }
-    setRoomID(null);
+  if (autoSearchTimeoutRef.current) clearTimeout(autoSearchTimeoutRef.current);
+  
+  resetCurrentCall();
+  if (roomID) {
+    socket.emit('disconnect_call', roomID);
+  }
+  
+  setRoomID(null);
+  currentRoomID.current = null;
+  
+  // Delay nhẹ để backend kịp dọn phòng
+  setTimeout(() => {
     handleStartSearching();
-  };
+  }, 300);
+};
   // ==========================================================
   // TÍCH HỢP AI CONTENT MODERATOR VÀO HÀM GỬI TIN NHẮN
   // ==========================================================
   const handleSendMessage = async () => {
     if (!chatInput.trim() || !roomID) return;
-    const textToCheck = chatInput.trim();
+    
+    // 🔒 BẢO MẬT XSS: Lọc sạch mã độc ngay khi vừa nhận được chuỗi
+    const rawText = chatInput.trim();
+    const textToCheck = DOMPurify.sanitize(rawText);
+    
+    // Nếu user cố tình chỉ gửi mã độc (bị lọc sạch sẽ thành chuỗi rỗng) thì chặn luôn
+    if (!textToCheck) {
+        setChatInput('');
+        return;
+    }
     const textLower = textToCheck.toLowerCase();
 
     // 1. Chặn gửi nếu AI đang khởi động
@@ -382,14 +465,40 @@ const handleNextUser = () => {
     }
 
     // 4. Cho phép gửi đi nếu an toàn
-    socket.emit('send_message', {
+    // Ví dụ cấu trúc mới gửi lên server
+  socket.emit('send_message', {
       roomID: roomID,
-      content: textToCheck
+      type: 'text',
+      content: textToCheck // <-- Đổi chuỗi cố định thành biến textToCheck ở đây
     });
 
     setChatMessages(prev => [...prev, { sender: 'me', text: textToCheck }]);
     setChatInput('');
   };
+  // Xử lý khi user bấm chọn 1 Emoji
+const handleEmojiClick = (emojiObject) => {
+  setChatInput(prev => prev + emojiObject.emoji);
+};
+
+// Xử lý khi user bấm chọn 1 ảnh GIF
+const handleGifClick = (gif, e) => {
+  e.preventDefault();
+  // Lấy URL của ảnh GIF
+  const gifUrl = gif.images.fixed_height.url; 
+
+  // Gửi ngay lập tức qua Socket.IO với type: 'gif'
+  socket.emit('send_message', {
+    roomID: roomID,
+    type: 'gif',
+    content: gifUrl
+  });
+
+  // Cập nhật lên màn hình của chính mình
+  setChatMessages(prev => [...prev, { sender: 'me', text: gifUrl, type: 'gif' }]);
+  
+  // Đóng bảng chọn GIF
+  setShowGifPicker(false); 
+};
 // Danh sách lý do report — sát với bối cảnh sinh viên UTC2
 const REPORT_REASONS = [
   { id: 'harass',  label: 'Quấy rối / lời lẽ khiếm nhã', icon: '😡' },
@@ -536,8 +645,7 @@ const handleSubmitReport = () => {
   setError('');
   setLoading(true);
   try {
-    const response = await axios.post('/api/auth/login', { username, password });
-    
+const response = await axios.post('/api/auth/login', { username, password });    
     // SỬA ĐOẠN NÀY: Lấy trực tiếp data trả về
     const data = response.data;
     
@@ -641,12 +749,38 @@ const handleFilterChange = (type) => {
       {/* CỘT 2 & 3: KHÔNG GIAN VIDEO CALL VÀ CHAT */}
       <div className="u2-main-content call-mode">
         {/* Dynamic class tương ứng với chế độ hiển thị pip hoặc split */}
-        <div className={`u2-video-container layout-${videoLayout}`}>
+        <div className={`u2-video-container layout-${videoLayout} ${isFullScreen ? 'fullscreen-mode' : ''}`}>
+          
           <button
             className="layout-toggle-btn"
             onClick={() => setVideoLayout(videoLayout === 'pip' ? 'split' : 'pip')}
           >
             {videoLayout === 'pip' ? '🔲 Chia đôi toa tàu' : '🔳 Chế độ thu nhỏ (PiP)'}
+          </button>
+
+          {/* Nút Phóng to / Thu nhỏ toàn màn hình (Icon góc dưới trái) */}
+          <button
+            className="fullscreen-toggle-btn"
+            onClick={() => setIsFullScreen(!isFullScreen)}
+            title={isFullScreen ? "Thu nhỏ" : "Toàn màn hình"}
+          >
+            {isFullScreen ? (
+              /* Icon Thu nhỏ (Mũi tên hướng vào) */
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="4 14 10 14 10 20"></polyline>
+                <polyline points="20 10 14 10 14 4"></polyline>
+                <line x1="14" y1="10" x2="21" y2="3"></line>
+                <line x1="3" y1="21" x2="10" y2="14"></line>
+              </svg>
+            ) : (
+              /* Icon Phóng to giống ảnh của bạn (Mũi tên hướng ra) */
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 4 4 4 4 9"></polyline>
+                <line x1="4" y1="4" x2="10" y2="10"></line>
+                <polyline points="15 20 20 20 20 15"></polyline>
+                <line x1="20" y1="20" x2="14" y2="14"></line>
+              </svg>
+            )}
           </button>
 
           {/* Khung video người lạ (Hành khách bí ẩn) */}
@@ -883,18 +1017,6 @@ const handleFilterChange = (type) => {
       >
         Làm mịn da
       </button>
-      <button 
-        className={cameraFilter === 'vintage' ? 'active' : ''} 
-        onClick={() => handleFilterChange('vintage')}
-      >
-        Hoài cổ
-      </button>
-      <button 
-        className={cameraFilter === 'bw' ? 'active' : ''} 
-        onClick={() => handleFilterChange('bw')}
-      >
-        Đen trắng
-      </button>
     </div>
   )}
 </div>
@@ -904,22 +1026,126 @@ const handleFilterChange = (type) => {
         <div className="u2-chat-sidebar">
           <div className="chat-header">💬 Trò chuyện trên toa</div>
           <div className="chat-messages">
-            {chatMessages.map((msg, index) => (
-              <div key={index} className={`chat-bubble ${msg.sender}`}>
-                {msg.text}
-              </div>
-            ))}
-          </div>
+  {chatMessages.map((msg, index) => (
+    <div key={index} className={`chat-bubble ${msg.sender}`}>
+      
+      {/* Kiểm tra phân loại tin nhắn */}
+      {msg.type === 'gif' ? (
+        <img 
+          src={msg.text} 
+          alt="GIF" 
+          style={{ maxWidth: '100%', borderRadius: '8px' }} 
+        />
+      ) : (
+        msg.text
+      )}
+      
+    </div>
+  ))}
+</div>
           <div className="chat-input-area">
-            <input 
-              type="text" 
-              placeholder="Nhập tin nhắn..." 
-              disabled={!isConnected} 
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-            />
-            <button disabled={!isConnected} onClick={handleSendMessage}>Gửi</button>
+            <div className="chat-toolbar-container" style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+  
+  {/* BẢNG CHỌN EMOJI */}
+{showEmojiPicker && (
+  <div className="u2-picker-popup">
+    <EmojiPicker
+      onEmojiClick={handleEmojiClick}
+      theme="light"
+      width={300}
+      height={380}
+      searchPlaceHolder="Tìm biểu tượng cảm xúc..."
+      previewConfig={{ showPreview: false }}
+      skinTonesDisabled
+      lazyLoadEmojis
+      categories={[
+        { category: Categories.SUGGESTED, name: 'Hay dùng' },
+        { category: Categories.SMILEYS_PEOPLE, name: 'Mặt cười & Con người' },
+        { category: Categories.ANIMALS_NATURE, name: 'Động vật & Thiên nhiên' },
+        { category: Categories.FOOD_DRINK, name: 'Đồ ăn & Thức uống' },
+        { category: Categories.TRAVEL_PLACES, name: 'Du lịch & Địa điểm' },
+        { category: Categories.ACTIVITIES, name: 'Hoạt động' },
+        { category: Categories.OBJECTS, name: 'Đồ vật' },
+        { category: Categories.SYMBOLS, name: 'Ký hiệu' },
+        { category: Categories.FLAGS, name: 'Cờ' },
+      ]}
+    />
+  </div>
+)}
+
+{/* BẢNG CHỌN GIF */}
+{showGifPicker && (
+  <div className="u2-picker-popup">
+    <div className="u2-gif-wrapper">
+
+      {/* Ô tìm kiếm GIF (đồng bộ style ô nhập u2-input) */}
+      <div className="u2-gif-search-box">
+        <span className="u2-gif-search-icon">🔍</span>
+        <input
+          className="u2-gif-search"
+          type="text"
+          placeholder="Tìm kiếm GIF..."
+          value={gifSearchTerm}
+          onChange={(e) => setGifSearchTerm(e.target.value)}
+          autoFocus
+        />
+      </div>
+
+      {/* Vùng chứa lưới ảnh cuộn được */}
+      <div className="u2-gif-grid-container">
+        <Grid 
+          key={gifSearchTerm} 
+          width={276} /* Đã trừ hao padding 12px x 2 của container 300px */
+          columns={2} 
+          gutter={8}
+          fetchGifs={fetchGifs} 
+          onGifClick={handleGifClick} 
+        />
+      </div>
+    </div>
+  </div>
+)}
+
+  {/* CÁC NÚT MỞ MENU CÔNG CỤ */}
+  <div className="toolbar-buttons" style={{ display: 'flex', gap: '10px' }}>
+    <button 
+      title="Thêm biểu tượng cảm xúc"
+      disabled={!isConnected}
+      onClick={() => { setShowEmojiPicker(!showEmojiPicker); setShowGifPicker(false); }}
+      style={{ background: 'none', border: 'none', cursor: isConnected ? 'pointer' : 'not-allowed', fontSize: '20px', opacity: isConnected ? 1 : 0.5 }}
+    >
+      😀
+    </button>
+    
+    <button 
+      title="Thêm GIF"
+      disabled={!isConnected}
+      onClick={() => { setShowGifPicker(!showGifPicker); setShowEmojiPicker(false); }}
+      style={{ background: 'none', border: 'none', cursor: isConnected ? 'pointer' : 'not-allowed', fontSize: '14px', fontWeight: 'bold', color: 'var(--navy)', opacity: isConnected ? 1 : 0.5 }}
+    >
+      GIF
+    </button>
+  </div>
+
+  {/* Ô NHẬP TEXT VÀ NÚT GỬI */}
+  <div className="u2-send-row" style={{ display: 'flex', gap: '10px' }}>
+    <input
+      type="text"
+      placeholder={isConnected ? "Nhập tin nhắn..." : "Đang chờ kết nối..."}
+      disabled={!isConnected}
+      value={chatInput} 
+      onChange={(e) => setChatInput(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault(); 
+          handleSendMessage();
+        }
+      }}
+      style={{ flex: 1 }}
+    />
+    <button disabled={!isConnected} onClick={handleSendMessage}>Gửi</button>
+  </div>
+</div>
           </div>
         </div>
       </div>
