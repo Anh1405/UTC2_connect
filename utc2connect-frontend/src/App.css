@@ -681,87 +681,158 @@
 }
 .ctrl-btn.stop:hover { box-shadow: 0 10px 24px rgba(198,73,63,0.55); }
 
-/* HỘP CHAT VĂN BẢN BÊN PHẢI */
+/* HỘP CHAT VĂN BẢN BÊN PHẢI — đồng bộ theme vé tàu UTC2 (navy + amber) */
 .u2-chat-sidebar {
-  background: var(--fb-card);
+  background: var(--paper);
   border-radius: 12px;
-  border: 1px solid var(--fb-divider);
+  border: 1px solid #E1E0D6;
   display: flex;
   flex-direction: column;
   height: calc(100vh - 120px);
   min-height: 550px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 20px rgba(16, 27, 51, 0.1);
+  overflow: hidden;
 }
 
 .chat-header {
-  padding: 14px;
-  font-weight: 700;
-  border-bottom: 1px solid var(--fb-divider);
-  color: var(--navy);
-  background: var(--fb-hover);
-  border-radius: 12px 12px 0 0;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 19px;
+  letter-spacing: 0.04em;
+  color: var(--paper);
+  background: linear-gradient(120deg, var(--navy) 0%, var(--navy-light) 100%);
+  border-bottom: 3px solid var(--amber);
 }
 
 .chat-messages {
   flex: 1;
-  padding: 14px;
+  padding: 16px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  background:
+    radial-gradient(circle at 0 0, rgba(255,180,0,0.05), transparent 40%),
+    var(--paper);
+}
+.chat-messages::-webkit-scrollbar { width: 6px; }
+.chat-messages::-webkit-scrollbar-thumb {
+  background: #E1E0D6;
+  border-radius: 3px;
 }
 
-.system-msg {
-  font-size: 12px;
+.system-msg,
+.chat-bubble.system {
+  align-self: center;
+  max-width: 90%;
+  background: transparent;
+  padding: 4px 10px;
+  font-size: 11.5px;
   color: var(--ink-muted);
   text-align: center;
   font-style: italic;
+  letter-spacing: 0.01em;
 }
 
 .chat-bubble {
   max-width: 80%;
-  padding: 8px 14px;
+  padding: 9px 14px;
   border-radius: 16px;
   font-size: 14px;
-  line-height: 1.4;
+  line-height: 1.45;
+  box-shadow: 0 1px 2px rgba(16, 27, 51, 0.06);
 }
 .chat-bubble.stranger {
-  background: var(--fb-hover);
-  color: var(--navy);
+  background: #fff;
+  border: 1px solid #E1E0D6;
+  color: var(--ink);
   align-self: flex-start;
   border-bottom-left-radius: 4px;
 }
 .chat-bubble.me {
-  background: var(--fb-blue);
-  color: #fff;
+  background: linear-gradient(135deg, #FFC93C 0%, var(--amber) 100%);
+  color: var(--navy);
+  font-weight: 500;
   align-self: flex-end;
   border-bottom-right-radius: 4px;
 }
 
-.chat-input-area {
-  padding: 12px;
-  border-top: 1px solid var(--fb-divider);
+/* Nút mở emoji/GIF: hình tròn vàng nhạt khi hover, đồng bộ với các control khác */
+.toolbar-buttons button {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
   display: flex;
-  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
 }
-.chat-input-area input {
-  flex: 1;
+.toolbar-buttons button:not(:disabled):hover {
+  background: rgba(255, 180, 0, 0.16) !important;
+}
+
+/* Bao bọc khu vực nhập tin nhắn */
+.chat-input-area {
+  padding: 12px 14px;
+  border-top: 1px solid #E1E0D6;
+  background: var(--paper);
+  display: flex;
+  width: 100%;
+  box-sizing: border-box; /* Đảm bảo padding không làm tràn width */
+}
+
+/* Hàng chứa input và nút gửi */
+.u2-send-row {
+  display: flex;
+  gap: 8px; /* Khoảng cách vừa phải giữa input và nút */
+  width: 100%;
+}
+
+.u2-send-row input {
+  flex: 1 1 auto;
+  min-width: 0; /* 👈 QUAN TRỌNG NHẤT: Cho phép input co nhỏ lại trên màn hình hẹp mà không đẩy nút Gửi ra ngoài */
+  width: 100%;
   padding: 10px 14px;
-  border: 1px solid var(--fb-divider);
+  border: 1.5px solid #E1E0D6;
   border-radius: 20px;
+  background: #FBFAF4;
   outline: none;
   font-size: 14px;
+  color: var(--ink);
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  box-sizing: border-box;
 }
-.chat-input-area button {
-  background: var(--fb-blue);
-  color: white;
+
+.u2-send-row input::placeholder { color: #B7B4A6; }
+
+.u2-send-row input:focus {
+  border-color: var(--amber);
+  background: var(--paper);
+  box-shadow: 0 0 0 3px rgba(255, 180, 0, 0.18);
+}
+
+/* Nút Gửi */
+.u2-send-row button {
+  flex: 0 0 auto; /* 👈 Không cho phép nút Gửi bị ép bẹp khi màn hình nhỏ */
+  white-space: nowrap; /* 👈 Không cho chữ "Gửi" bị rớt dòng */
+  background: var(--amber);
+  color: var(--navy);
   border: none;
-  padding: 0 16px;
+  padding: 0 18px;
   border-radius: 20px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
+  transition: background 0.15s;
 }
-.chat-input-area button:disabled, .chat-input-area input:disabled {
+
+.u2-send-row button:not(:disabled):hover {
+  background: var(--amber-dark);
+}
+
+.u2-send-row button:disabled, .u2-send-row input:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -781,24 +852,41 @@
    ========================================== */
 
 @media screen and (max-width: 900px) {
-  /* 1. Chuyển bố cục sang 1 cột dọc, chat rớt xuống dưới video */
+  /* 1. Thu gọn Navbar */
+  .u2-navbar { padding: 0 10px; }
+  .u2-nav-logo { font-size: 18px; }
+  .u2-user-pill { gap: 8px; }
+  .u2-user-name {
+    font-size: 12px;
+    max-width: 100px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  .u2-logout-btn { padding: 5px 10px; font-size: 11px; }
+
+  /* 2. Chuyển bố cục sang 1 cột dọc, chat rớt xuống dưới video */
   .u2-main-content.call-mode {
     grid-template-columns: 1fr;
     padding: 10px;
     gap: 15px;
   }
 
-  /* 2. Khung video ngắn lại trên mobile để nhường chỗ cho Chat */
+  /* 3. Khung video ngắn lại trên mobile để nhường chỗ cho Chat */
   .u2-video-container {
     height: 55vh; 
     min-height: 380px;
     border-radius: 12px;
   }
 
-  /* 3. Dàn lại thanh điều khiển cho gọn, tránh tràn viền */
+  /* 4. Dàn lại thanh điều khiển cho gọn, tránh tràn viền; chừa vùng
+     home-indicator của iPhone (env(safe-area-inset-bottom)) để nút
+     không bị thanh cử chỉ của iOS che mất */
   .video-controls {
     height: auto;
-    padding: 12px 8px;
+    padding: 12px 8px calc(12px + env(safe-area-inset-bottom, 0px));
     flex-wrap: wrap; /* Cho phép các nút rớt dòng nếu quá chật */
     bottom: 0;
   }
@@ -806,25 +894,76 @@
   .ctrl-btn {
     padding: 10px 16px;
     font-size: 13px;
+    border-radius: 10px;
     flex: 1 1 auto; /* Nút tự co giãn lấp đầy khoảng trống */
     text-align: center;
   }
 
-  /* 4. Ô video PIP (của chính mình) nhỏ lại để không che hết đối phương */
+  /* 5. Ô video PIP (của chính mình) nhỏ lại để không che hết đối phương */
   .video-box.local-video {
-    width: 90px;
-    height: 130px;
-    bottom: 80px; /* Nhích lên trên thanh điều khiển */
+    width: 85px;
+    height: 115px;
+    bottom: 90px; /* Nhích lên trên thanh điều khiển */
     right: 10px;
     border-width: 1.5px;
   }
 
-  /* 5. Khung chat tự động điều chỉnh chiều cao trên mobile */
+  /* 6. Nút Filter (Azar) và menu bộ lọc thu gọn theo màn hình nhỏ */
+  .azar-filter-wrapper { bottom: 100px; left: 10px; }
+  .azar-magic-btn { width: 40px; height: 40px; font-size: 18px; }
+  .azar-filter-menu { bottom: 45px; width: 100px; }
+  .azar-filter-menu button { padding: 8px; font-size: 12px; }
+
+  /* 7. Khung chat tự động điều chỉnh chiều cao trên mobile */
   .u2-chat-sidebar {
     height: 40vh;
     min-height: 300px;
     border-radius: 12px;
   }
+
+  /* 8. HIỆU ỨNG MESSENGER: đưa bảng Emoji/GIF xuống DƯỚI ô nhập thay vì
+     nổi che tin nhắn phía trên như trên PC — đúng thói quen chat trên điện thoại */
+  .toolbar-buttons { order: 1; margin-bottom: 4px; }
+  .u2-send-row { order: 2; }
+  .u2-picker-popup {
+    order: 3;
+    position: relative !important; /* Gỡ lệnh nổi lơ lửng (absolute) của bản PC */
+    bottom: auto !important;
+    right: auto !important;
+    width: 100% !important;
+    height: 300px !important; /* Cố định chiều cao giống bàn phím điện thoại */
+    margin-top: 12px !important;
+    margin-bottom: 0 !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+    border: 1px solid #E1E0D6 !important;
+    animation: u2-slide-down 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+  }
+  .u2-picker-popup .EmojiPickerReact.EmojiPickerReact,
+  .u2-gif-wrapper {
+    height: 100% !important;
+  }
+  /* Tự động kéo dài khung chat khi mở Emoji/GIF để tin nhắn không bị ép bẹp.
+     Trình duyệt cũ không hỗ trợ :has() sẽ tự bỏ qua dòng này, không gây lỗi. */
+  .u2-chat-sidebar:has(.u2-picker-popup) {
+    height: 80vh !important; 
+    transition: height 0.25s ease-out;
+  }
+
+  /* 9. Khu vực nhập chat: LUÔN để cỡ chữ ô nhập >= 16px trên mobile, nếu
+     không Safari/Chrome iOS sẽ tự động zoom cả trang khi bấm vào ô nhập —
+     lỗi rất hay gặp và gây khó chịu khi gõ tin nhắn trên điện thoại */
+  .chat-input-area { padding: 8px 10px; }
+  .toolbar-buttons button { width: 30px; height: 30px; font-size: 18px; }
+  .u2-send-row input { padding: 10px 14px; font-size: 16px; }
+  .u2-send-row button { padding: 0 14px; font-size: 13px; }
+  .u2-gif-search { font-size: 16px; }
+  .u2-picker-popup .EmojiPickerReact input.epr-search { font-size: 16px !important; }
+}
+
+@keyframes u2-slide-down {
+  from { transform: translateY(-15px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 /* Fix lỗi hiển thị vé tàu trên màn hình quá nhỏ (iPhone SE, v.v.) */
@@ -1260,3 +1399,278 @@
   padding: 40px 20px; text-align: center; background: var(--paper);
 }
 .u2-report-done-icon { font-size: 40px; margin-bottom: 8px; }
+/* ==========================================================
+   TÙY CHỈNH BẢNG CHỌN EMOJI & GIF ĐỒNG BỘ THEME UTC2
+   ========================================================== */
+
+/* Khung popup chung cho cả Emoji và GIF */
+.u2-picker-popup {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 12px;
+  z-index: 100;
+  width: 300px;
+  background: var(--paper);
+  border: 1px solid #E1E0D6;
+  border-radius: 12px; /* Bo góc bằng với u2-chat-sidebar */
+  box-shadow: 0 8px 24px rgba(16, 27, 51, 0.18);
+  animation: u2-pop-in 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); /* Tái sử dụng hiệu ứng nảy */
+  overflow: hidden;
+}
+
+/* Ép kiểu toàn bộ thư viện Emoji Picker React theo theme vé tàu UTC2 (vàng amber + navy) */
+.u2-picker-popup .EmojiPickerReact.EmojiPickerReact {
+  --epr-bg-color: var(--paper);
+  --epr-category-label-bg-color: var(--paper);
+  --epr-text-color: var(--ink);
+  --epr-hover-bg-color: rgba(255, 180, 0, 0.14);
+  --epr-focus-bg-color: rgba(255, 180, 0, 0.14);
+  --epr-highlight-color: var(--amber);
+  --epr-search-input-bg-color: #FBFAF4;
+  --epr-search-input-bg-color-active: var(--paper);
+  --epr-search-border-color: var(--amber);
+  --epr-search-input-text-color: var(--ink);
+  --epr-search-input-placeholder-color: #B7B4A6;
+  --epr-category-icon-active-color: var(--amber-dark);
+  --epr-picker-border-color: transparent;
+  --epr-skin-tone-picker-menu-color: var(--paper);
+  --epr-emoji-variation-picker-bg-color: var(--paper);
+  --epr-emoji-variation-picker-text-color: var(--ink);
+  width: 100% !important;
+  border: none !important;
+  border-radius: 12px !important;
+}
+
+/* Bo tròn ô search theo đúng phong cách u2-input, viền vàng khi focus */
+.u2-picker-popup .EmojiPickerReact input.epr-search {
+  border-radius: 20px !important;
+  border: 1.5px solid #E1E0D6 !important;
+}
+.u2-picker-popup .EmojiPickerReact input.epr-search:focus {
+  border-color: var(--amber) !important;
+  box-shadow: 0 0 0 3px rgba(255, 180, 0, 0.18);
+}
+
+/* Nhãn danh mục (Frequently Used, Smileys & People...) đồng bộ font + màu chữ navy */
+.u2-picker-popup .EmojiPickerReact .epr-category-nav,
+.u2-picker-popup .EmojiPickerReact .epr-emoji-category-label {
+  color: var(--navy) !important;
+  font-weight: 600;
+}
+
+/* QUAN TRỌNG: trước đây có 1 đoạn CSS ép "background-color: transparent !important"
+   lên mọi <button> trong picker để né rule global .chat-input-area button (nền xanh dương).
+   Đoạn đó đã bị xoá vì gốc rễ đã được xử lý (xem className "u2-send-row" trong JSX) —
+   không còn class trùng tên nữa nên thư viện tự vẽ icon bình thường, không cần ép nữa.
+   Chỉ giữ lại phần tô điểm cộng thêm (an toàn, không xoá icon) cho danh mục đang chọn. */
+.u2-picker-popup .EmojiPickerReact .epr-cat-btn[aria-selected="true"] {
+  background-color: rgba(255, 180, 0, 0.16) !important;
+  border-radius: 8px !important;
+}
+
+
+/* Giao diện riêng cho bảng chọn GIF */
+.u2-gif-wrapper {
+  width: 100%;
+  height: 380px;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+/* Khung ô tìm kiếm GIF: bắt chước y hệt ô nhập tin nhắn (u2-input), có icon kính lúp */
+.u2-gif-search-box {
+  position: relative;
+  flex: 0 0 auto;
+  margin-bottom: 10px;
+}
+.u2-gif-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  opacity: 0.55;
+  pointer-events: none;
+}
+.u2-gif-search {
+  width: 100%;
+  padding: 10px 14px 10px 34px;
+  border: 1.5px solid #E1E0D6;
+  border-radius: 20px;
+  background: #FBFAF4;
+  font-size: 14px;
+  outline: none;
+  color: var(--ink);
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.u2-gif-search::placeholder { color: #B7B4A6; }
+
+.u2-gif-search:focus {
+  border-color: var(--amber); /* Dùng màu vàng đặc trưng UTC2 khi focus */
+  box-shadow: 0 0 0 3px rgba(255, 180, 0, 0.18);
+  background: var(--paper);
+}
+
+/* Thanh cuộn cho lưới GIF - flex:1 để không đẩy khoảng trắng thừa lên trên ô search */
+.u2-gif-grid-container {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-radius: 6px;
+}
+.u2-gif-grid-container::-webkit-scrollbar { width: 6px; }
+.u2-gif-grid-container::-webkit-scrollbar-thumb {
+  background: #E1E0D6;
+  border-radius: 3px;
+}
+/* ==========================================================
+   TỐI ƯU MÀN HÌNH ĐIỆN THOẠI QUAY NGANG (SỬA LỖI ÉP BẸP)
+   ========================================================== */
+@media screen and (max-width: 950px) and (orientation: landscape),
+       screen and (max-height: 500px) {
+  
+  /* 1. Trả lại bố cục 2 cột (trái video, phải chat) vì màn hình ngang có lợi thế về chiều rộng */
+  .u2-main-content.call-mode {
+    grid-template-columns: 1.5fr 1fr !important; /* Khung video to hơn chat một chút */
+    height: calc(100vh - 44px) !important; /* Khóa cứng chiều cao, trừ đi navbar */
+    padding: 10px !important;
+    gap: 10px !important;
+    overflow: hidden; /* Ngăn chặn cuộn trang thừa thãi */
+  }
+
+  /* 2. Ép video container vừa đúng chiều cao còn lại, xóa bỏ giới hạn min-height */
+  .u2-video-container {
+    height: 100% !important; 
+    min-height: unset !important; 
+  }
+
+  /* 3. Bóp lại thanh điều khiển cho gọn gàng hơn */
+  .video-controls {
+    height: auto !important;
+    padding: 8px !important;
+    bottom: 0 !important;
+  }
+  .ctrl-btn {
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+  }
+
+  /* 4. Chat sidebar cũng full height theo grid */
+  .u2-chat-sidebar {
+    height: 100% !important;
+    min-height: unset !important;
+  }
+
+  /* 5. Đảm bảo phần hiển thị tin nhắn có thể co rút linh hoạt */
+  .chat-messages {
+    min-height: 60px !important; 
+    flex: 1 1 auto !important;
+  }
+
+  /* 6. Ép bảng Emoji/GIF cực lùn để nhét vừa vào không gian hẹp */
+  .u2-picker-popup {
+    height: 140px !important; 
+    min-height: 140px !important;
+    margin-top: 5px !important;
+  }
+
+  /* 7. Thu nhỏ Navbar để tiết kiệm thêm khoảng trống phía trên */
+  .u2-navbar {
+    height: 44px !important;
+  }
+  .u2-home-layout {
+    padding-top: 44px !important;
+  }
+
+  /* 8. Ẩn tạm nút Filter (Azar) khi quay ngang để tránh đè giao diện */
+  .azar-filter-wrapper {
+    display: none !important;
+  }
+}
+/* ==========================================================
+   CHẾ ĐỘ TOÀN MÀN HÌNH (THEATER FULLSCREEN)
+   ========================================================== */
+
+/* Trạng thái phóng to: Đè lên mọi thứ bằng fixed + z-index cao */
+.u2-video-container.fullscreen-mode {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important; /* Fallback cho trình duyệt cũ */
+  height: 100dvh !important; /* 👈 QUAN TRỌNG: Tự động co giãn né thanh địa chỉ trình duyệt */
+  max-width: 100vw !important; 
+  min-height: 100dvh !important;
+  z-index: 9999 !important; 
+  border-radius: 0 !important;
+  margin: 0 !important;
+  background: #080f1e !important; 
+}
+
+/* Nút Phóng to / Thu nhỏ (Dạng Icon tròn góc dưới trái) */
+.fullscreen-toggle-btn {
+  position: absolute;
+  bottom: 160px; /* 👈 Nâng lên trên nút Azar (Azar đang ở bottom 98px) */
+  left: 16px; 
+  z-index: 20; /* Lớn hơn z-index của thanh điều khiển */
+  background: rgba(16, 27, 51, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #fff;
+  border: none;
+  
+  /* Tạo hình tròn hoàn hảo */
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.fullscreen-toggle-btn:hover { 
+  background: var(--amber); 
+  color: #101b33; 
+  transform: scale(1.1);
+}
+
+/* Tối ưu riêng cho điện thoại */
+@media screen and (max-width: 950px) {
+  .fullscreen-toggle-btn {
+    bottom: 155px !important; /* 👈 Xếp ngay trên nút Azar (Azar mobile đang ở 100px) */
+    left: 10px !important;
+    width: 40px !important;
+    height: 40px !important;
+  }
+}
+/* Ép thẻ bọc video phải giãn toàn bộ 100% khung cha */
+.video-element-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* 1. Khung video của đối phương: Dùng 'contain' để HIỂN THỊ TRỌN VẸN, KHÔNG BỊ CẮT GÓC */
+.video-box.remote-video video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important; 
+  background: var(--navy); /* Thêm màu nền đồng bộ để che khoảng trống viền nếu có */
+}
+
+/* 2. Riêng khung video của bạn (PIP nhỏ góc dưới): Dùng 'cover' để LẤP ĐẦY ô chữ nhật nhỏ cho đẹp */
+.video-box.local-video video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important; 
+}
