@@ -2,6 +2,8 @@ package com.utc2connect.controller;
 
 import com.utc2connect.dto.LoginRequest;
 import com.utc2connect.entity.User;
+import com.utc2connect.entity.UserDevice;
+import com.utc2connect.repository.UserDeviceRepository;
 import com.utc2connect.repository.userRepository;
 import com.utc2connect.security.JwtTokenProvider;
 import com.utc2connect.service.OtpService;
@@ -11,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -29,6 +32,8 @@ public class AuthController {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private JwtTokenProvider tokenProvider;
+    @Autowired
+    private UserDeviceRepository userDeviceRepo;
     @PostMapping("/send-otp")
     public ResponseEntity<?> sendOtp(@RequestBody Map<String, String> request){
         String email = request.get("email");
@@ -74,34 +79,91 @@ public class AuthController {
         }
     }
 
+    // ==================== API ĐĂNG NHẬP (CÓ BẢO VỆ THIẾT BỊ LẠ) ====================
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> request) {
-        // SỬA Ở ĐÂY: Dùng .get("username") thay vì .getUsername()
         String username = request.get("username");
         String password = request.get("password");
+        String deviceId = request.get("deviceId"); // 👈 Nhận deviceId từ Frontend
 
         Optional<User> userOptional = userRepo.findByUsername(username);
 
         if (userOptional.isEmpty()) {
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Tên đăng nhập không tồn tại!");
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.badRequest().body(Map.of("message", "Tên đăng nhập không tồn tại!"));
         }
 
         User user = userOptional.get();
 
-        // SỬA Ở ĐÂY: Truyền biến password vừa lấy được từ Map vào
         if (!passwordEncoder.matches(password, user.getPassword())) {
             return ResponseEntity.badRequest().body(Map.of("message", "Mật khẩu không chính xác!"));
         }
 
+        // 🔍 KIỂM TRA THIẾT BỊ
+        boolean isKnownDevice = deviceId != null && userDeviceRepo.existsByUserAndDeviceId(user, deviceId);
+
+        if (!isKnownDevice) {
+            // 🛑 TRƯỜNG HỢP: THIẾT BỊ LẠ
+            // Tự động gửi OTP xác thực thiết bị mới về Email
+            otpService.generatedAndSaveOtp(user.getEmail());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("requireOtp", true);
+            response.put("message", "Phát hiện đăng nhập từ thiết bị mới! Mã OTP xác minh đã được gửi về Gmail của bạn.");
+            response.put("email", user.getEmail());
+            return ResponseEntity.ok(response);
+        }
+
+        // ✅ TRƯỜNG HỢP: THIẾT BỊ QUEN
+        // Cập nhật thời gian sử dụng thiết bị gần nhất
+        userDeviceRepo.findByUserAndDeviceId(user, deviceId).ifPresent(device -> {
+            device.setLastUsedAt(LocalDateTime.now());
+            userDeviceRepo.save(device);
+        });
+
+        // Tạo JWT Token cho vào luôn
         String jwt = tokenProvider.generateToken(user.getUsername());
         Map<String, Object> response = new HashMap<>();
+        response.put("requireOtp", false);
         response.put("message", "Đăng nhập thành công!");
         response.put("username", user.getUsername());
         response.put("email", user.getEmail());
+        response.put("accessToken", jwt);
+        response.put("tokenType", "Bearer");
 
-        // Trả kèm token và loại token về cho client lưu trữ
+        return ResponseEntity.ok(response);
+    }
+    // ==================== API XÁC THỰC OTP THIẾT BỊ LẠ ====================
+    @PostMapping("/login/verify-otp")
+    public ResponseEntity<?> verifyDeviceOtp(@RequestBody Map<String, String> request) {
+        String username = request.get("username");
+        String otpCode = request.get("otp");
+        String deviceId = request.get("deviceId");
+
+        Optional<User> userOptional = userRepo.findByUsername(username);
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Tài khoản không tồn tại!"));
+        }
+
+        User user = userOptional.get();
+
+        // 1. Kiểm tra OTP
+        boolean isOtpValid = otpService.validateOtp(user.getEmail(), otpCode);
+        if (!isOtpValid) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Mã OTP không chính xác hoặc đã hết hạn!"));
+        }
+
+        // 2. Lưu thiết bị mới vào danh sách thiết bị tin tưởng (Device Whitelist)
+        if (deviceId != null && !deviceId.isEmpty()) {
+            UserDevice newDevice = new UserDevice(user, deviceId);
+            userDeviceRepo.save(newDevice);
+        }
+
+        // 3. Cấp Token đăng nhập
+        String jwt = tokenProvider.generateToken(user.getUsername());
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Xác thực thiết bị mới thành công!");
+        response.put("username", user.getUsername());
+        response.put("email", user.getEmail());
         response.put("accessToken", jwt);
         response.put("tokenType", "Bearer");
 
