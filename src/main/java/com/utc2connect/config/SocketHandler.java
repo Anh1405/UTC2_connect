@@ -10,7 +10,7 @@ import com.utc2connect.security.MessageRateLimiter;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
+import com.utc2connect.service.ModerationService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
@@ -34,16 +34,25 @@ public class SocketHandler {
     private final ConcurrentHashMap<UUID, String> sessionUsernames = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, String> activeRooms = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Long> roomStartTimes = new ConcurrentHashMap<>();
+ Update-new-code-04
+    private final ModerationService moderationService;
 
     @Autowired
     public SocketHandler(SocketIOServer server,
                          ReportRepository reportRepository,
                          userRepository userRepo,
+ Update-new-code-04
+                         MessageRateLimiter rateLimiter,
+                         ModerationService moderationService) { // 👈 THÊM PARAMETER NÀY
+
                          MessageRateLimiter rateLimiter) { // 👈 2. Đã tiêm RateLimiter vào Constructor
         this.server = server;
         this.reportRepository = reportRepository;
         this.userRepo = userRepo;
         this.rateLimiter = rateLimiter;
+ Update-new-code-04
+        this.moderationService = moderationService; // 👈 GÁN GIÁ TRỊ VÀO ĐÂY
+
     }
 
     @PostConstruct
@@ -86,6 +95,67 @@ public class SocketHandler {
         // ==================== WEBRTC SIGNALING ====================
         server.addEventListener("send_offer", WebRTCPayload.class,
                 (client, data, ack) -> server.getRoomOperations(data.getRoomID()).sendEvent("receive_offer", client, data));
+ Update-new-code-04
+
+        server.addEventListener("send_answer", WebRTCPayload.class,
+                (client, data, ack) -> server.getRoomOperations(data.getRoomID()).sendEvent("receive_answer", client, data));
+
+        server.addEventListener("send_ice_candidate", WebRTCPayload.class,
+                (client, data, ack) -> server.getRoomOperations(data.getRoomID()).sendEvent("receive_ice_candidate", client, data));
+
+        // ==================== CHAT (ĐÃ TÍCH HỢP CHỐNG SPAM) ====================
+        server.addEventListener("send_message", MessagePayload.class, (client, data, ack) -> {
+            // Lấy username của client đang gửi tin (nếu chưa có thì lấy tạm SessionID)
+            String username = sessionUsernames.getOrDefault(client.getSessionId(), client.getSessionId().toString());
+            String tempId = data.getTempId() == null ? "" : data.getTempId();
+
+            // 🛑 BẢO MẬT LỚP 1: Kiểm tra xem user có đang spam quá 5 tin/3s hay không
+            if (!rateLimiter.isAllowed(username)) {
+                System.out.println("⚠️ Phát hiện Spam từ user [" + username + "]");
+                // 🔄 Gửi kèm tempId để Frontend gỡ đúng tin nhắn vừa hiển thị lạc quan (Optimistic UI),
+                // tránh trường hợp người gửi vẫn thấy tin nhắn "đã gửi" dù thực chất bị chặn tại Server.
+                client.sendEvent("message_blocked", Map.of(
+                        "tempId", tempId,
+                        "reason", "RATE_LIMIT",
+                        "message", "Bạn đang gửi tin nhắn quá nhanh! Vui lòng đợi chút."
+                ));
+                return; // Chặn không cho gửi tin nhắn vào phòng
+            }
+
+            // 🛑 BẢO MẬT LỚP 2: KIỂM DUYỆT AI NGỮ CẢNH (Content Moderation)
+            // Chỉ kiểm tra nếu type là "text" (Bỏ qua nếu type là "gif" hoặc "image")
+            if ("text".equals(data.getType())) {
+                String content = data.getContent();
+
+                // 🔒 FAIL-CLOSED: moderate() trả về 3 trạng thái rõ ràng thay vì boolean cũ,
+                // để phân biệt "nội dung vi phạm" với "OpenAI đang lỗi/hết quota" (429...).
+                ModerationService.ModerationResult result = moderationService.moderate(content);
+
+                if (result == ModerationService.ModerationResult.BLOCKED_TOXIC) {
+                    System.out.println("🛑 AI chặn tin nhắn tiêu cực/độc hại từ [" + username + "]: " + content);
+                    client.sendEvent("message_blocked", Map.of(
+                            "tempId", tempId,
+                            "reason", "TOXIC",
+                            "message", "Tin nhắn của bạn bị giữ lại vì có dấu hiệu vi phạm quy tắc ứng xử."
+                    ));
+                    return; // Dừng thực thi, KHÔNG broadcast tin nhắn sang cho hành khách kia
+                }
+
+                if (result == ModerationService.ModerationResult.SERVICE_UNAVAILABLE) {
+                    // Trước đây lỗi gọi OpenAI (429/timeout...) sẽ bị coi là "an toàn" và cho gửi thẳng (fail-open).
+                    // Giờ mặc định CHẶN tạm khi không kiểm duyệt được, an toàn hơn là cho qua bừa.
+                    System.out.println("🛑 Hệ thống kiểm duyệt tạm thời không khả dụng, chặn tạm tin nhắn từ [" + username + "]");
+                    client.sendEvent("message_blocked", Map.of(
+                            "tempId", tempId,
+                            "reason", "SERVICE_UNAVAILABLE",
+                            "message", "Hệ thống kiểm duyệt đang quá tải, vui lòng thử gửi lại sau ít phút."
+                    ));
+                    return;
+                }
+            }
+
+            // ✅ NẾU QUA ĐƯỢC 2 LỚP BẢO MẬT -> Gửi tin nhắn đến các client trong phòng
+
 
         server.addEventListener("send_answer", WebRTCPayload.class,
                 (client, data, ack) -> server.getRoomOperations(data.getRoomID()).sendEvent("receive_answer", client, data));
@@ -273,11 +343,17 @@ public class SocketHandler {
     public static class MessagePayload {
         private String roomID;
         private String content;
+        private String type; // 👈 Thêm dòng này
+        private String tempId; // 👈 ID tạm phía Client, dùng để rollback UI khi tin nhắn bị chặn
 
         public String getRoomID() { return roomID; }
         public void setRoomID(String roomID) { this.roomID = roomID; }
         public String getContent() { return content; }
         public void setContent(String content) { this.content = content; }
+        public String getType() { return type; } // 👈 Thêm getter
+        public void setType(String type) { this.type = type; } // 👈 Thêm setter
+        public String getTempId() { return tempId; }
+        public void setTempId(String tempId) { this.tempId = tempId; }
     }
 
     @Data

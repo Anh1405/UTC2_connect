@@ -20,5 +20,10 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
+ Update-new-code-04
+    - name: Build with Maven
+      run: mvn -B package --file pom.xml
+
    - name: Build with Maven
         run: mvn -B package --file pom.xml -DskipTests
+

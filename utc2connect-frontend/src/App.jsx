@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import io from 'socket.io-client'; // Thêm thư viện socket.io-client
 import './App.css';
+ Update-new-code-04
+
 import * as toxicity from '@tensorflow-models/toxicity';
 import EmojiPicker, { Categories } from 'emoji-picker-react';
 import { Grid } from '@giphy/react-components';
@@ -60,6 +62,8 @@ function App() {
   const [cameraFilter, setCameraFilter] = useState('none');
   const [remoteFilter, setRemoteFilter] = useState('none');
   const [showFilters, setShowFilters] = useState(false);
+ Update-new-code-04
+
   // State quản lý AI Content Moderator
   const [toxicityModel, setToxicityModel] = useState(null);
   const [isAILoading, setIsAILoading] = useState(true);
@@ -74,6 +78,11 @@ const [searchElapsed, setSearchElapsed] = useState(0);
 const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 const [showGifPicker, setShowGifPicker] = useState(false);
 const [gifSearchTerm, setGifSearchTerm] = useState('');
+ Update-new-code-04
+// THÊM 2 DÒNG NÀY VÀO:
+const [showOtpModal, setShowOtpModal] = useState(false);
+const [deviceOtp, setDeviceOtp] = useState('');
+
 
 // Nếu có từ khóa thì gọi API search, nếu không có thì gọi API trending
 // Nếu có từ khóa thì gọi API search, nếu không có thì gọi API trending
@@ -84,11 +93,48 @@ const fetchGifs = (offset) => {
   }
   return gf.trending({ offset, limit: 10 });
 };
+ Update-new-code-04
+  // Kiểm tra "vé" (JWT) đã hết hạn hay chưa, chỉ đọc phần payload (không cần verify chữ ký,
+  // việc verify thật sự vẫn do backend làm) — dùng để tự phát hiện sớm ở phía Client.
+  const isTokenExpired = (token) => {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (!payload.exp) return false; // Không có exp thì không tự kết luận là hết hạn
+      return Date.now() >= payload.exp * 1000;
+    } catch (err) {
+      // Token lỗi định dạng / bị chỉnh sửa -> coi như hết hạn luôn cho an toàn
+      return true;
+    }
+  };
+
+  // Dọn dẹp toàn bộ state đăng nhập + quay về màn hình Đăng nhập.
+  // Dùng chung cho: token hết hạn khi F5, và bị Server từ chối kết nối Socket (connect_error).
+  const forceLogoutToLogin = (reason) => {
+    resetCurrentCall();
+    socket.disconnect();
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUserData(null);
+    setLoginSuccess(false);
+    setMode('login');
+    setRoomID(null);
+    currentRoomID.current = null;
+    if (reason) alert(reason);
+  };
+
+
   // 1. Tự động soát vé lại khi F5 trang web nếu có token
   useEffect(() => {
     const savedToken = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
+
     if (savedToken && savedUser) {
+      if (isTokenExpired(savedToken)) {
+        // 🎫 Vé đã hết hạn từ trước -> không cho vào thẳng, dọn dẹp và để màn hình Đăng nhập hiện ra
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        return;
+      }
       setUserData(JSON.parse(savedUser));
       setLoginSuccess(true);
     }
@@ -110,7 +156,7 @@ useEffect(() => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
-        audio: true // Để true nếu muốn test cả âm thanh cuộc gọi
+        audio: false // Để true nếu muốn test cả âm thanh cuộc gọi
       });
       localStream.current = stream;
       if (localVideoRef.current) {
@@ -138,6 +184,56 @@ useEffect(() => {
     socket.io.opts.query = { token: token };
     
     socket.connect();
+
+    // 🎫 Server từ chối bắt tay (vé giả / vé hết hạn) -> không lặng thinh nữa,
+    // tự động dọn state và đưa người dùng quay lại màn hình Đăng nhập.
+    socket.on('connect_error', (err) => {
+      console.error("❌ Socket bị từ chối kết nối:", err.message);
+      forceLogoutToLogin("Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại!");
+    });
+
+    // 🔄 Server đã chặn tin nhắn (spam / AI phát hiện vi phạm / hệ thống kiểm duyệt lỗi)
+    // -> gỡ đúng tin nhắn đó khỏi khung chat của mình (đã lỡ hiển thị lạc quan trước đó)
+    // và báo rõ lý do, tránh gây ảo giác "tin đã gửi thành công" trong khi thực ra chưa hề tới người kia.
+    // 🔄 Xử lý tin nhắn bị Backend từ chối
+socket.on('message_blocked', (data) => {
+  const { tempId, message } = data || {};
+  
+  let blockedText = ''; // Biến để "cứu" lại nội dung tin nhắn
+
+  setChatMessages(prev => {
+    // 1. Tìm lại tin nhắn bị gỡ để lấy nội dung
+    const blockedMsg = prev.find(m => m.tempId === tempId);
+    if (blockedMsg) {
+      blockedText = blockedMsg.text;
+    }
+
+    // 2. Gỡ bỏ tin nhắn giả định (Optimistic UI)
+    const filteredMessages = prev.filter(m => m.tempId !== tempId);
+    
+    // 3. Hiển thị thông báo lý do chặn
+    return [...filteredMessages, {
+      sender: 'system',
+      text: `⚠️ ${message || 'Tin nhắn của bạn không được gửi.'}`
+    }];
+  });
+
+  // 4. KIỂM TRA: Nếu tin nhắn bị chặn do API đang khởi động hoặc lỗi mạng (Fail-Closed)
+  // (Dựa vào các từ khoá lỗi mà Backend trả về)
+  const isSystemError = message && (
+    message.toLowerCase().includes('khởi động') || 
+    message.toLowerCase().includes('thử lại') || 
+    message.toLowerCase().includes('lỗi')
+  );
+
+  // Nếu là lỗi server chứ không phải do người dùng chửi thề -> Trả lại text vào ô nhập
+  if (isSystemError && blockedText) {
+    // Dùng setTimeout để đảm bảo State chatInput update độc lập và mượt mà
+    setTimeout(() => {
+      setChatInput(blockedText);
+    }, 100);
+  }
+});
 
     socket.on('matched', async (data) => {
       console.log("👉 [WebRTC] 1. Ghép cặp thành công:", data);
@@ -289,6 +385,8 @@ useEffect(() => {
   }
 });
     return () => {
+      socket.off('connect_error');
+      socket.off('message_blocked');
       socket.off('matched');
       socket.off('receive_offer');
       socket.off('receive_answer');
@@ -299,6 +397,8 @@ useEffect(() => {
       socket.off('report_result');
     };
   }, [loginSuccess]);
+ Update-new-code-04
+
 // Effect mới: Khởi tạo mô hình Trí tuệ nhân tạo kiểm duyệt từ ngữ
   useEffect(() => {
     const loadAI = async () => {
@@ -339,6 +439,34 @@ const formatElapsed = (s) => {
     setRemoteUsername(null);
   };
 
+ Update-new-code-04
+ const handleStartSearching = async () => {
+    if (autoSearchTimeoutRef.current) {
+      clearTimeout(autoSearchTimeoutRef.current);
+    }
+
+    if (isSearching) return;
+
+    // 👈 THÊM ĐOẠN NÀY: Yêu cầu bật Mic và ghép vào luồng hình ảnh đang có
+    try {
+      const hasAudio = localStream.current?.getAudioTracks().length > 0;
+      if (!hasAudio) {
+        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const audioTrack = audioStream.getAudioTracks()[0];
+        localStream.current.addTrack(audioTrack); // Trộn mic vào camera
+      }
+    } catch (err) {
+      console.error("❌ Lỗi khi bật Mic:", err);
+      alert("Bạn cần cấp quyền Microphone để trò chuyện trên chuyến tàu này!");
+      return; // Chặn không cho ghép cặp nếu từ chối mic
+    }
+
+    setIsSearching(true);
+    setIsConnected(false);
+    socket.emit('join_matchmaking', userData?.username);
+  };
+
+
   // Phát lệnh tìm kiếm bạn bè lên Hàng đợi của Spring Boot
  const handleStartSearching = () => {
   if (autoSearchTimeoutRef.current) {
@@ -352,6 +480,7 @@ const formatElapsed = (s) => {
   setIsConnected(false);
   socket.emit('join_matchmaking', userData?.username);
 };
+
 
   // Hủy tìm kiếm (khi đang searching mà chưa match)
 const handleStopSearching = () => {
@@ -396,20 +525,58 @@ const handleNextUser = () => {
   }, 300);
 };
   // ==========================================================
+ Update-new-code-04
+  // LỚP 1: BỘ LỌC TỪ NGỮ SIÊU NHẸ TẠI FRONTEND (REGEX & SET)
+
   // TÍCH HỢP AI CONTENT MODERATOR VÀO HÀM GỬI TIN NHẮN
   // ==========================================================
   const handleSendMessage = async () => {
     if (!chatInput.trim() || !roomID) return;
     
+ Update-new-code-04
+    // Lọc XSS bằng DOMPurify
+    const rawText = chatInput.trim();
+    const textToCheck = DOMPurify.sanitize(rawText);
+    
+
     // 🔒 BẢO MẬT XSS: Lọc sạch mã độc ngay khi vừa nhận được chuỗi
     const rawText = chatInput.trim();
     const textToCheck = DOMPurify.sanitize(rawText);
     
     // Nếu user cố tình chỉ gửi mã độc (bị lọc sạch sẽ thành chuỗi rỗng) thì chặn luôn
+
     if (!textToCheck) {
         setChatInput('');
         return;
     }
+ Update-new-code-04
+    
+    const textLower = textToCheck.toLowerCase();
+
+   // 1. CHUẨN BỊ BỘ LỌC TIẾNG VIỆT
+    // Vá lỗ hổng: Xóa SẠCH mọi ký tự đặc biệt, dấu câu, nháy đơn, nháy kép...
+const textWithoutPunctuation = textLower.replace(/[!@#$%^&*(),.?":{}|<>'\-=_+[\]\\;/~`]/g, '');    
+    // Tách câu thành các từ rời rạc
+    const words = textWithoutPunctuation.split(/\s+/);
+
+    const vietnameseBadWords = new Set([
+       'ngu', 'địt', 'đụ', 'lồn', 'cặc', 'đm', 'vcl', 'đĩ', 'phò',
+      'đcm', 'đmm', 'cc', 'cl', 'lol', 'lồz', 'cứt', 'bitch', 'fuck', 'shit', 
+      'loz', 'lon', 'cac', 'vkl', 'dkm', 'vl', 'ml', 'clgt','concac'
+    ]);
+
+    const violentPhrases = ['đánh chết', 'giết', 'mẹ mày', 'bố mày', 'thằng ranh', 'đấm chết', 'đập chết'];
+
+    // 2. KIỂM TRA VI PHẠM (Lớp 1)
+    const hasBadWord = words.some(word => vietnameseBadWords.has(word));
+    // Dùng textWithoutPunctuation để check cụm từ luôn, chặn trò lách luật kiểu 'đ-ụ m-ẹ'
+    const hasViolentPhrase = violentPhrases.some(phrase => textWithoutPunctuation.includes(phrase));
+
+    if (hasBadWord || hasViolentPhrase) {
+      setChatMessages(prev => [...prev, { 
+        sender: 'system', 
+        text: '🛑 Tin nhắn chứa ngôn từ tục tĩu hoặc bạo lực! Đã bị chặn bởi hệ thống.' 
+
     const textLower = textToCheck.toLowerCase();
 
     // 1. Chặn gửi nếu AI đang khởi động
@@ -439,6 +606,21 @@ const handleNextUser = () => {
       setChatInput('');
       return; 
     }
+
+ Update-new-code-04
+    // 3. NẾU QUA ĐƯỢC LỚP 1 -> GỬI LÊN CHO SPRING BOOT (LỚP 2) XỬ LÝ TIẾP
+    // tempId dùng để đối chiếu lại nếu Server chặn tin nhắn này (rate limit / AI kiểm duyệt / lỗi hệ thống)
+    const tempId = generateUUID();
+    socket.emit('send_message', {
+      roomID: roomID,
+      type: 'text',
+      content: textToCheck,
+      tempId: tempId
+    });
+
+    // Tạm hiển thị tin nhắn của mình trước cho mượt (Optimistic UI)
+    // Lưu kèm tempId để có thể GỠ lại đúng tin nhắn này nếu Server từ chối
+    setChatMessages(prev => [...prev, { sender: 'me', text: textToCheck, tempId }]);
 
     // 3. Bộ lọc AI với độ nhạy cao (Dành cho Tiếng Anh / Ngữ cảnh ẩn)
     if (toxicityModel) {
@@ -479,6 +661,40 @@ const handleNextUser = () => {
 const handleEmojiClick = (emojiObject) => {
   setChatInput(prev => prev + emojiObject.emoji);
 };
+ Update-new-code-04
+// Tạo UUID không phụ thuộc Web Crypto API — crypto.randomUUID() chỉ hoạt động trong "secure context"
+// (HTTPS hoặc localhost). Nếu app chạy qua HTTP thường (IP LAN, domain chưa có SSL...), gọi thẳng
+// crypto.randomUUID() sẽ throw lỗi -> device_id không lưu được -> mỗi lần vào lại bị coi là thiết bị mới.
+const generateUUID = () => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        try {
+            return crypto.randomUUID();
+        } catch (err) {
+            // Bị chặn ngoài secure context -> rơi xuống fallback bên dưới, không throw ra ngoài
+        }
+    }
+    // Fallback UUID v4 thủ công, không cần Web Crypto, chạy được trên mọi trình duyệt/giao thức
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+    });
+};
+const getDeviceId = () => {
+    let deviceId = localStorage.getItem("device_id");
+    if (!deviceId) {
+        deviceId = generateUUID(); // Tạo chuỗi UUID ngẫu nhiên, không phụ thuộc secure context
+        localStorage.setItem("device_id", deviceId);
+    }
+    return deviceId;
+};
+// Xử lý khi user bấm chọn 1 ảnh GIF
+const handleGifClick = (gif, e) => {
+  e.preventDefault();
+  // Lấy URL của ảnh GIF
+  const gifUrl = gif.images.fixed_height.url; 
+
+
 
 // Xử lý khi user bấm chọn 1 ảnh GIF
 const handleGifClick = (gif, e) => {
@@ -641,6 +857,73 @@ const handleSubmitReport = () => {
 
   // Xử lý Đăng nhập
   const handleLogin = async () => {
+ Update-new-code-04
+    const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            username: username,
+            password: password,
+            deviceId: getDeviceId() // 👈 Gửi kèm ID thiết bị
+        })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+        if (data.requireOtp) {
+            // 🛑 PHÁT HIỆN THIẾT BỊ LẠ!
+            alert(data.message);
+            // Hiện Popup / Modal để User nhập mã OTP từ Email
+            setShowOtpModal(true); 
+        } else {
+            // ✅ THIẾT BỊ QUEN -> Cho vào thẳng
+            localStorage.setItem("token", data.accessToken);
+            
+            // --- THÊM 3 DÒNG NÀY ---
+            const currentUser = { username: username };
+            localStorage.setItem("user", JSON.stringify(currentUser));
+            setUserData(currentUser);
+            setLoginSuccess(true); 
+            // -----------------------
+            
+            alert("Đăng nhập thành công!");
+        }
+    } else {
+        alert(data.message);
+    }
+};
+
+// Hàm khi user bấm "Xác nhận OTP thiết bị mới" trong Modal:
+const handleVerifyDeviceOtp = async (otpCode) => {
+    const response = await fetch("/api/auth/login/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            username: username,
+            otp: otpCode,
+            deviceId: getDeviceId()
+        })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+        localStorage.setItem("token", data.accessToken);
+        
+        // --- THÊM 3 DÒNG NÀY ---
+        const currentUser = { username: username };
+        localStorage.setItem("user", JSON.stringify(currentUser));
+        setUserData(currentUser);
+        setLoginSuccess(true);
+        // -----------------------
+        
+        alert("Xác nhận thiết bị thành công!");
+        setShowOtpModal(false);
+    } else {
+        alert(data.message);
+    }
+
   setMessage('');
   setError('');
   setLoading(true);
@@ -676,13 +959,8 @@ const handleFilterChange = (type) => {
   };
   // Xử lý Đăng xuất
   const handleLogout = () => {
-    resetCurrentCall();
     if (roomID) socket.emit('disconnect_call', roomID);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setUserData(null);
-    setLoginSuccess(false);
-    setMode('login');
+    forceLogoutToLogin();
     setMessage('');
     setError('');
   };
@@ -761,6 +1039,15 @@ const handleFilterChange = (type) => {
           {/* Nút Phóng to / Thu nhỏ toàn màn hình (Icon góc dưới trái) */}
           <button
             className="fullscreen-toggle-btn"
+Update-new-code-04
+            onClick={() => {
+              setIsFullScreen(!isFullScreen);
+              // CHỈ ép về PiP nếu bật Toàn màn hình TRÊN ĐIỆN THOẠI (chiều rộng <= 900px)
+              if (!isFullScreen && window.innerWidth <= 900) {
+                setVideoLayout('pip');
+              }
+            }}
+
             onClick={() => setIsFullScreen(!isFullScreen)}
             title={isFullScreen ? "Thu nhỏ" : "Toàn màn hình"}
           >
@@ -1368,6 +1655,54 @@ const handleFilterChange = (type) => {
           </div>
         </>
       )}
+ Update-new-code-04
+    </div>
+  </div>
+)}
+{/* MODAL XÁC THỰC THIẾT BỊ LẠ */}
+{showOtpModal && (
+  <div className="u2-report-overlay" onClick={() => setShowOtpModal(false)}>
+    <div className="u2-report-ticket" onClick={(e) => e.stopPropagation()}>
+      <div className="u2-report-head">
+        <span className="u2-mono" style={{ fontSize: 11, letterSpacing: '0.1em', color: 'var(--amber)' }}>
+          CẢNH BÁO BẢO MẬT
+        </span>
+        <h3 className="u2-display" style={{ margin: '2px 0 0', fontSize: 22, color: 'var(--paper)' }}>
+          Thiết bị mới
+        </h3>
+        <button className="u2-report-close" onClick={() => setShowOtpModal(false)}>✕</button>
+      </div>
+
+      <div className="u2-report-body" style={{ textAlign: 'center', marginTop: '16px' }}>
+        <p style={{ fontSize: 14, color: 'var(--ink-muted)', marginBottom: 20 }}>
+          Hệ thống phát hiện bạn đang đăng nhập từ thiết bị lạ. Vui lòng kiểm tra email sinh viên và nhập mã OTP để xác nhận.
+        </p>
+        
+        <input 
+          type="text" 
+          className="u2-input" 
+          placeholder="Nhập mã OTP 6 số..." 
+          value={deviceOtp}
+          onChange={(e) => setDeviceOtp(e.target.value)}
+          maxLength={6}
+          style={{ textAlign: 'center', letterSpacing: '4px', fontSize: '18px', fontWeight: 'bold' }}
+        />
+      </div>
+
+      <div className="u2-report-footer" style={{ marginTop: '20px' }}>
+        <button className="u2-btn ghost" onClick={() => setShowOtpModal(false)}>Huỷ</button>
+        <button
+          className="u2-btn primary"
+          disabled={!deviceOtp || deviceOtp.length < 6}
+          onClick={() => handleVerifyDeviceOtp(deviceOtp)}
+        >
+          Xác nhận thiết bị
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+    </div>
     </div>
   </div>
 )}

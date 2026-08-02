@@ -485,9 +485,13 @@
 .video-box.remote-video {
   position: absolute;
   inset: 0;
-  bottom: 82px; /* chừa chỗ cho thanh điều khiển bên dưới */
+  bottom: 82px;
   border-radius: 16px;
-  background: #101b33;
+  background: #0B1428;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .video-box.local-video {
@@ -551,10 +555,16 @@
   z-index: 2;
   letter-spacing: 0.02em;
 }
+/* Tìm đoạn này ở dòng 354-358 trong App.css */
 .video-box.local-video .video-tag {
   font-size: 10px;
   padding: 3px 7px;
   color: var(--paper);
+  /* 👈 Thêm 4 dòng dưới đây vào */
+  max-width: calc(100% - 14px); /* Trừ đi phần lề padding */
+  white-space: nowrap;          /* Ép không cho rớt dòng */
+  overflow: hidden;             /* Ẩn phần chữ bị tràn */
+  text-overflow: ellipsis;      /* Hiển thị dấu ... nếu chữ quá dài */
 }
 
 /* CHẾ ĐỘ CHIA ĐÔI MÀN HÌNH — lựa chọn thay thế cho PIP, 2 khung bằng
@@ -563,12 +573,23 @@
    ghi đè đúng phần position:absolute mặc định của chế độ PIP. */
 .u2-video-container.split-mode {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 2.2fr 1fr;     /* ← Tăng tỷ lệ bên trái (remote) */
   grid-template-rows: 1fr;
   grid-template-areas: "remote local";
   gap: 12px;
-  padding-bottom: 82px; /* chừa chỗ cho thanh điều khiển cố định bên dưới */
+  padding-bottom: 82px;
   box-sizing: border-box;
+}
+
+/* Mobile - Chia dọc thì remote vẫn to hơn */
+@media (max-width: 600px) {
+  .u2-video-container.split-mode {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1.6fr 1fr;     /* Remote to hơn bên trên */
+    grid-template-areas: 
+      "remote"
+      "local";
+  }
 }
 .u2-video-container.split-mode .video-box.remote-video {
   position: relative;
@@ -1660,6 +1681,51 @@
   position: relative;
 }
 
+ Update-new-code-04
+/* 1. Khung video của đối phương - HIỂN THỊ TOÀN BỘ không cắt góc */
+/* ==================== VIDEO NGƯỜI ĐỐI DIỆN ==================== */
+.video-box.remote-video {
+  position: absolute;
+  inset: 0;
+  bottom: 82px;
+  border-radius: 16px;
+  background: #0B1428;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.video-box.remote-video video {
+  width: 100% !important;
+  height: 100% !important;
+  /* Sửa contain thành cover */
+  object-fit: cover !important; 
+  background: #0B1428;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: auto;
+  min-width: 0;
+  min-height: 0;
+  transform: none;
+}
+
+/* Tối ưu Split mode */
+.u2-video-container.split-mode .video-box.remote-video {
+  position: relative;
+  inset: auto;
+  bottom: auto;
+}
+
+.u2-video-container.split-mode .video-box.remote-video video {
+  object-fit: contain !important;
+}
+
+/* Fullscreen */
+.u2-video-container.fullscreen-mode .video-box.remote-video video {
+  object-fit: contain !important;
+}
+
 /* 1. Khung video của đối phương: Dùng 'contain' để HIỂN THỊ TRỌN VẸN, KHÔNG BỊ CẮT GÓC */
 .video-box.remote-video video {
   width: 100% !important;
@@ -1667,10 +1733,75 @@
   object-fit: contain !important; 
   background: var(--navy); /* Thêm màu nền đồng bộ để che khoảng trống viền nếu có */
 }
-
 /* 2. Riêng khung video của bạn (PIP nhỏ góc dưới): Dùng 'cover' để LẤP ĐẦY ô chữ nhật nhỏ cho đẹp */
 .video-box.local-video video {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important; 
+Update-new-code-04
+}
+/* ==========================================================
+   TỐI ƯU HÓA CHẾ ĐỘ TOÀN MÀN HÌNH (CLEAN & IMMERSIVE)
+   ========================================================== */
+
+/* 1. Ẩn thanh 3 nút điều khiển dưới đáy và nút Đổi layout góc trên */
+.u2-video-container.fullscreen-mode .video-controls,
+.u2-video-container.fullscreen-mode .layout-toggle-btn {
+  display: none !important;
+}
+
+/* 2. Trả lại không gian cho video: Xóa bỏ các khoảng lề chừa cho thanh điều khiển */
+.u2-video-container.fullscreen-mode .video-box.remote-video {
+  bottom: 0 !important; /* Lấp đầy khoảng đen dưới đáy ở chế độ PiP */
+}
+.u2-video-container.fullscreen-mode.layout-split {
+  padding-bottom: 12px !important; /* Gỡ khoảng lề 98px dưới đáy ở chế độ Chia đôi */
+}
+
+/* 3. Dời nút Thu nhỏ và Làm đẹp (Azar) xuống gọn gàng ở góc dưới bên trái */
+.u2-video-container.fullscreen-mode .fullscreen-toggle-btn {
+  bottom: 24px !important;
+  left: 16px !important;
+}
+.u2-video-container.fullscreen-mode .azar-filter-wrapper {
+  bottom: 22px !important; /* Căn giữa dọc cho tiệp với nút thu nhỏ 44px */
+  left: 76px !important;   /* Xếp ngay cạnh nút Thu nhỏ */
+}
+
+/* 4. Dời luôn khung Camera của chính bạn (nếu đang bật PiP) xuống sát góc phải cho thoáng tầm nhìn */
+.u2-video-container.fullscreen-mode:not(.layout-split) .video-box.local-video {
+  bottom: 24px !important;
+  right: 16px !important;
+}
+.u2-video-container .video-box.remote-video video,
+.u2-video-container.split-mode .remote-video video,
+.u2-video-container.fullscreen-mode .remote-video video {
+  /* Sửa contain thành cover */
+  object-fit: cover !important; 
+  background: var(--navy);
+}
+/* Tối ưu Split mode trong Fullscreen */
+.u2-video-container.fullscreen-mode.split-mode {
+  grid-template-columns: 2.4fr 1fr;
+}
+/* ====================== FIX ORIENTATION MẠNH (Remote quay ngang) ====================== */
+.video-box.remote-video video {
+  transition: none !important; /* Tránh lag khi rotate */
+}
+
+@media (orientation: landscape) {
+  .video-box.remote-video video {
+    /* Sửa contain thành cover */
+    object-fit: cover !important; 
+  }
+  
+  .u2-video-container.split-mode {
+    grid-template-columns: 2.6fr 1fr !important;
+  }
+}
+
+@media screen and (max-height: 550px) and (orientation: landscape) {
+  .u2-video-container {
+    height: 100% !important;
+  }
 }
