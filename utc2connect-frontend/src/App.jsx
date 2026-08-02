@@ -2,6 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import io from 'socket.io-client'; // Thêm thư viện socket.io-client
 import './App.css';
+ Update-new-code-04
+
+import * as toxicity from '@tensorflow-models/toxicity';
 import EmojiPicker, { Categories } from 'emoji-picker-react';
 import { Grid } from '@giphy/react-components';
 import { GiphyFetch } from '@giphy/js-fetch-api';
@@ -59,6 +62,11 @@ function App() {
   const [cameraFilter, setCameraFilter] = useState('none');
   const [remoteFilter, setRemoteFilter] = useState('none');
   const [showFilters, setShowFilters] = useState(false);
+ Update-new-code-04
+
+  // State quản lý AI Content Moderator
+  const [toxicityModel, setToxicityModel] = useState(null);
+  const [isAILoading, setIsAILoading] = useState(true);
   // State cho Modal Báo cáo vi phạm
 const [showReportModal, setShowReportModal] = useState(false);
 const [reportReasonId, setReportReasonId] = useState(null);
@@ -70,9 +78,12 @@ const [searchElapsed, setSearchElapsed] = useState(0);
 const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 const [showGifPicker, setShowGifPicker] = useState(false);
 const [gifSearchTerm, setGifSearchTerm] = useState('');
+ Update-new-code-04
 // THÊM 2 DÒNG NÀY VÀO:
 const [showOtpModal, setShowOtpModal] = useState(false);
 const [deviceOtp, setDeviceOtp] = useState('');
+
+
 // Nếu có từ khóa thì gọi API search, nếu không có thì gọi API trending
 // Nếu có từ khóa thì gọi API search, nếu không có thì gọi API trending
 const fetchGifs = (offset) => {
@@ -82,6 +93,7 @@ const fetchGifs = (offset) => {
   }
   return gf.trending({ offset, limit: 10 });
 };
+ Update-new-code-04
   // Kiểm tra "vé" (JWT) đã hết hạn hay chưa, chỉ đọc phần payload (không cần verify chữ ký,
   // việc verify thật sự vẫn do backend làm) — dùng để tự phát hiện sớm ở phía Client.
   const isTokenExpired = (token) => {
@@ -109,6 +121,7 @@ const fetchGifs = (offset) => {
     currentRoomID.current = null;
     if (reason) alert(reason);
   };
+
 
   // 1. Tự động soát vé lại khi F5 trang web nếu có token
   useEffect(() => {
@@ -384,6 +397,26 @@ socket.on('message_blocked', (data) => {
       socket.off('report_result');
     };
   }, [loginSuccess]);
+ Update-new-code-04
+
+// Effect mới: Khởi tạo mô hình Trí tuệ nhân tạo kiểm duyệt từ ngữ
+  useEffect(() => {
+    const loadAI = async () => {
+      try {
+        // TĂNG ĐỘ GẮT GAO: Giảm từ 0.85 xuống 0.65
+        const threshold = 0.65; 
+        
+        const model = await toxicity.load(threshold, ['toxicity', 'insult', 'threat', 'obscene']);
+        setToxicityModel(model);
+        setIsAILoading(false);
+        console.log("🤖 [AI Moderator] Bộ lọc ngôn ngữ AI đã sẵn sàng hoạt động với độ nhạy cao!");
+      } catch (err) {
+        console.error("❌ [AI Moderator] Lỗi tải AI:", err);
+        setIsAILoading(false);
+      }
+    };
+    loadAI();
+  }, []);
   useEffect(() => {
   if (!isSearching) { setSearchElapsed(0); return; }
   const interval = setInterval(() => setSearchElapsed(prev => prev + 1), 1000);
@@ -406,6 +439,7 @@ const formatElapsed = (s) => {
     setRemoteUsername(null);
   };
 
+ Update-new-code-04
  const handleStartSearching = async () => {
     if (autoSearchTimeoutRef.current) {
       clearTimeout(autoSearchTimeoutRef.current);
@@ -431,6 +465,22 @@ const formatElapsed = (s) => {
     setIsConnected(false);
     socket.emit('join_matchmaking', userData?.username);
   };
+
+
+  // Phát lệnh tìm kiếm bạn bè lên Hàng đợi của Spring Boot
+ const handleStartSearching = () => {
+  if (autoSearchTimeoutRef.current) {
+    clearTimeout(autoSearchTimeoutRef.current);
+  }
+
+  // Bảo vệ: không join nhiều lần
+  if (isSearching) return;
+
+  setIsSearching(true);
+  setIsConnected(false);
+  socket.emit('join_matchmaking', userData?.username);
+};
+
 
   // Hủy tìm kiếm (khi đang searching mà chưa match)
 const handleStopSearching = () => {
@@ -475,19 +525,31 @@ const handleNextUser = () => {
   }, 300);
 };
   // ==========================================================
+ Update-new-code-04
   // LỚP 1: BỘ LỌC TỪ NGỮ SIÊU NHẸ TẠI FRONTEND (REGEX & SET)
+
+  // TÍCH HỢP AI CONTENT MODERATOR VÀO HÀM GỬI TIN NHẮN
   // ==========================================================
   const handleSendMessage = async () => {
     if (!chatInput.trim() || !roomID) return;
     
+ Update-new-code-04
     // Lọc XSS bằng DOMPurify
     const rawText = chatInput.trim();
     const textToCheck = DOMPurify.sanitize(rawText);
     
+
+    // 🔒 BẢO MẬT XSS: Lọc sạch mã độc ngay khi vừa nhận được chuỗi
+    const rawText = chatInput.trim();
+    const textToCheck = DOMPurify.sanitize(rawText);
+    
+    // Nếu user cố tình chỉ gửi mã độc (bị lọc sạch sẽ thành chuỗi rỗng) thì chặn luôn
+
     if (!textToCheck) {
         setChatInput('');
         return;
     }
+ Update-new-code-04
     
     const textLower = textToCheck.toLowerCase();
 
@@ -514,11 +576,38 @@ const textWithoutPunctuation = textLower.replace(/[!@#$%^&*(),.?":{}|<>'\-=_+[\]
       setChatMessages(prev => [...prev, { 
         sender: 'system', 
         text: '🛑 Tin nhắn chứa ngôn từ tục tĩu hoặc bạo lực! Đã bị chặn bởi hệ thống.' 
+
+    const textLower = textToCheck.toLowerCase();
+
+    // 1. Chặn gửi nếu AI đang khởi động
+    if (isAILoading) {
+      setChatMessages(prev => [...prev, { 
+        sender: 'system', 
+        text: '⏳ Vui lòng đợi vài giây để hệ thống an ninh mạng khởi động...' 
+      }]);
+      return;
+    }
+
+    // 2. Mở rộng bộ lọc Tiếng Việt cực gắt (Bao gồm từ lóng, viết tắt, bạo lực)
+    const vietnameseBadWords = [
+      'chó', 'ngu', 'địt', 'đụ', 'lồn', 'cặc', 'đm', 'vcl', 'đĩ', 'phò',
+      'đcm', 'đmm', 'cc', 'cl', 'lol', 'lồz', 'đánh chết', 'giết', 'mẹ mày',
+      'bố mày', 'thằng ranh', 'cứt', 'bitch', 'fuck', 'shit', 'đấm','loz','lon','cac'
+    ]; 
+
+    // Quét chuỗi để tìm từ vi phạm
+    const hasBadWord = vietnameseBadWords.some(word => textLower.includes(word));
+
+    if (hasBadWord) {
+      setChatMessages(prev => [...prev, { 
+        sender: 'system', 
+        text: '🛑Tin nhắn chứa ngôn từ tục tĩu hoặc bạo lực!' 
       }]);
       setChatInput('');
       return; 
     }
 
+ Update-new-code-04
     // 3. NẾU QUA ĐƯỢC LỚP 1 -> GỬI LÊN CHO SPRING BOOT (LỚP 2) XỬ LÝ TIẾP
     // tempId dùng để đối chiếu lại nếu Server chặn tin nhắn này (rate limit / AI kiểm duyệt / lỗi hệ thống)
     const tempId = generateUUID();
@@ -532,12 +621,47 @@ const textWithoutPunctuation = textLower.replace(/[!@#$%^&*(),.?":{}|<>'\-=_+[\]
     // Tạm hiển thị tin nhắn của mình trước cho mượt (Optimistic UI)
     // Lưu kèm tempId để có thể GỠ lại đúng tin nhắn này nếu Server từ chối
     setChatMessages(prev => [...prev, { sender: 'me', text: textToCheck, tempId }]);
+
+    // 3. Bộ lọc AI với độ nhạy cao (Dành cho Tiếng Anh / Ngữ cảnh ẩn)
+    if (toxicityModel) {
+      try {
+        const predictions = await toxicityModel.classify([textToCheck]);
+        
+        // Xem điểm số thực tế AI chấm cho câu này trong tab Console (F12)
+        console.log("🔍 Kết quả AI quét câu: [" + textToCheck + "]", predictions);
+
+        // Kiểm tra xem có nhãn nào bị AI "tuýt còi" không
+        const isToxic = predictions.some(p => p.results[0].match === true);
+
+        if (isToxic) {
+          setChatMessages(prev => [...prev, { 
+            sender: 'system', 
+            text: '🛑Tin nhắn có tính chất tiêu cực, bạo lực hoặc đe dọa!' 
+          }]);
+          setChatInput('');
+          return;
+        }
+      } catch (error) {
+        console.error("❌ Lỗi AI:", error);
+      }
+    }
+
+    // 4. Cho phép gửi đi nếu an toàn
+    // Ví dụ cấu trúc mới gửi lên server
+  socket.emit('send_message', {
+      roomID: roomID,
+      type: 'text',
+      content: textToCheck // <-- Đổi chuỗi cố định thành biến textToCheck ở đây
+    });
+
+    setChatMessages(prev => [...prev, { sender: 'me', text: textToCheck }]);
     setChatInput('');
   };
   // Xử lý khi user bấm chọn 1 Emoji
 const handleEmojiClick = (emojiObject) => {
   setChatInput(prev => prev + emojiObject.emoji);
 };
+ Update-new-code-04
 // Tạo UUID không phụ thuộc Web Crypto API — crypto.randomUUID() chỉ hoạt động trong "secure context"
 // (HTTPS hoặc localhost). Nếu app chạy qua HTTP thường (IP LAN, domain chưa có SSL...), gọi thẳng
 // crypto.randomUUID() sẽ throw lỗi -> device_id không lưu được -> mỗi lần vào lại bị coi là thiết bị mới.
@@ -564,6 +688,14 @@ const getDeviceId = () => {
     }
     return deviceId;
 };
+// Xử lý khi user bấm chọn 1 ảnh GIF
+const handleGifClick = (gif, e) => {
+  e.preventDefault();
+  // Lấy URL của ảnh GIF
+  const gifUrl = gif.images.fixed_height.url; 
+
+
+
 // Xử lý khi user bấm chọn 1 ảnh GIF
 const handleGifClick = (gif, e) => {
   e.preventDefault();
@@ -725,6 +857,7 @@ const handleSubmitReport = () => {
 
   // Xử lý Đăng nhập
   const handleLogin = async () => {
+ Update-new-code-04
     const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -790,6 +923,33 @@ const handleVerifyDeviceOtp = async (otpCode) => {
     } else {
         alert(data.message);
     }
+
+  setMessage('');
+  setError('');
+  setLoading(true);
+  try {
+const response = await axios.post('/api/auth/login', { username, password });    
+    // SỬA ĐOẠN NÀY: Lấy trực tiếp data trả về
+    const data = response.data;
+    
+    setMessage(data.message);
+    
+    // Lưu object sạch vào state để không bị undefined
+    const loggedInUser = { 
+      username: data.username || username, // Nếu backend lỗi key thì lấy luôn username vừa gõ ở ô input
+      email: data.email || '' 
+    };
+    
+    setUserData(loggedInUser);
+    setLoginSuccess(true);
+
+    localStorage.setItem('token', data.accessToken);
+    localStorage.setItem('user', JSON.stringify(loggedInUser));
+  } catch (err) {
+    setError(err.response?.data?.message || 'Đăng nhập thất bại, vui lòng kiểm tra lại!');
+  } finally {
+    setLoading(false);
+  }
 };
 const handleFilterChange = (type) => {
     setCameraFilter(type); 
@@ -879,6 +1039,7 @@ const handleFilterChange = (type) => {
           {/* Nút Phóng to / Thu nhỏ toàn màn hình (Icon góc dưới trái) */}
           <button
             className="fullscreen-toggle-btn"
+Update-new-code-04
             onClick={() => {
               setIsFullScreen(!isFullScreen);
               // CHỈ ép về PiP nếu bật Toàn màn hình TRÊN ĐIỆN THOẠI (chiều rộng <= 900px)
@@ -886,6 +1047,8 @@ const handleFilterChange = (type) => {
                 setVideoLayout('pip');
               }
             }}
+
+            onClick={() => setIsFullScreen(!isFullScreen)}
             title={isFullScreen ? "Thu nhỏ" : "Toàn màn hình"}
           >
             {isFullScreen ? (
@@ -1492,6 +1655,7 @@ const handleFilterChange = (type) => {
           </div>
         </>
       )}
+ Update-new-code-04
     </div>
   </div>
 )}
@@ -1535,6 +1699,10 @@ const handleFilterChange = (type) => {
           Xác nhận thiết bị
         </button>
       </div>
+    </div>
+  </div>
+)}
+    </div>
     </div>
   </div>
 )}
