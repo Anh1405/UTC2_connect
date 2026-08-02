@@ -24,7 +24,7 @@ public class ModerationService {
 
     private final RestTemplate restTemplate = new RestTemplate();
     // Sử dụng model toxic-bert miễn phí từ Hugging Face
-    private static final String API_URL = "https://api-inference.huggingface.co/models/unitary/toxic-bert";
+    private static final String API_URL = "http://127.0.0.1:8000/moderate";
 
     // 🔒 FAIL-CLOSED: phân biệt rõ 3 trạng thái
     public enum ModerationResult {

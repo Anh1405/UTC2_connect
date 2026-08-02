@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+ai-engine/*.pth
+ai-engine/venv/
+*.pth
