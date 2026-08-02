@@ -500,7 +500,7 @@ const textWithoutPunctuation = textLower.replace(/[!@#$%^&*(),.?":{}|<>'\-=_+[\]
     const vietnameseBadWords = new Set([
        'ngu', 'địt', 'đụ', 'lồn', 'cặc', 'đm', 'vcl', 'đĩ', 'phò',
       'đcm', 'đmm', 'cc', 'cl', 'lol', 'lồz', 'cứt', 'bitch', 'fuck', 'shit', 
-      'loz', 'lon', 'cac', 'vkl', 'dkm', 'vl', 'ml', 'clgt'
+      'loz', 'lon', 'cac', 'vkl', 'dkm', 'vl', 'ml', 'clgt','concac'
     ]);
 
     const violentPhrases = ['đánh chết', 'giết', 'mẹ mày', 'bố mày', 'thằng ranh', 'đấm chết', 'đập chết'];
