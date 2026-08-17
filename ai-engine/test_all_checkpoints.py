@@ -35,11 +35,28 @@ test_sentences = [
     ("Code viết rác như thế này thì thà tắt máy đi ngủ còn hơn.", "toxic"),
     ("Chắc lúc sinh ra bác sĩ lỡ tay vứt nhầm não của bạn đi rồi hả?", "toxic"),
     ("Vãi nồi, dạo này fix bug ghê thế!", "safe"),
-    # --- câu mỉa mai MỚI, KHÔNG có trong NEW_EXAMPLES lúc train, để test tổng quát hóa thật ---
+    # --- câu mỉa mai MỚI ---
     ("Chắc bạn phải mất cả tiếng mới nghĩ ra được câu trả lời hay ho vậy nhỉ.", "toxic"),
     ("Đúng là thiên tài, ai cũng làm được mỗi bạn là không.", "toxic"),
     ("Bạn cứ tiếp tục phát huy đi, kiểu gì cũng có huy chương cho người sai nhiều nhất.", "toxic"),
     ("Nhìn bạn làm việc mà tôi tưởng đang xem phim hài.", "toxic"),
+    # --- câu toxic trực diện (không chửi xéo) ---
+    ("Tao mà gặp mày ở ngoài là tao đánh cho không còn răng ăn cơm.", "toxic"),
+    ("Có tin tao xiên chết mày ngay tại chỗ không?", "toxic"),
+    ("Biến đi không tao đập nát mặt bây giờ.", "toxic"),
+    ("Loại như mày xứng đáng bị xe cán.", "toxic"),
+    ("Mày bị ngu bẩm sinh hay có luyện tập vậy?", "toxic"),
+    ("Đúng là đồ vô dụng, làm cái gì cũng hỏng bét.", "toxic"),
+    ("Mày là thành phần vô học, không có đầu óc.", "toxic"),
+    ("Ngu như thế này thì sống làm gì cho tốn oxy.", "toxic"),
+    ("Mày chết đi cho xã hội bớt chật chỗ.", "toxic"),
+    ("Loại người như mày có tồn tại cũng chỉ làm bẩn mắt người khác.", "toxic"),
+    ("Giải thoát cho gia đình mày bằng cách tự tử đi.", "toxic"),
+    ("Cuộc đời mày là một sự thất bại toàn tập.", "toxic"),
+    ("Mấy thằng nghèo hèn như mày thì hiểu làm sao được.", "toxic"),
+    ("Đúng là lũ dốt nát, không bao giờ khá lên nổi.", "toxic"),
+    ("Thành phần nhà quê dơ bẩn.", "toxic"),
+    # --- câu ngữ cảnh safe ---
     ("Đệt, nãy giờ gõ cho cố rồi quên save file batch lại rồi!", "safe"),
     ("Mày điên à, tối nay tao bận làm đồ án rồi không đi chơi được đâu.", "safe"),
     ("Chết tiệt, cái server lại sập nữa rồi.", "safe"),
@@ -64,7 +81,6 @@ def get_raw_model_score(model, text: str) -> float:
         probs = torch.softmax(outputs.logits, dim=1)
         return probs[0][1].item()
 
-# Thêm danh sách này ở trên cùng, dưới TEEN_CODE_DICT
 IT_CONTEXT_WHITELIST = ["fix bug", "server", "đồ án", "code", "file batch", "deadline", "chức năng"]
 
 LEADING_INTERJECTIONS = [
@@ -106,20 +122,16 @@ def deep_score_text(model, raw_text: str) -> float:
         if not cleaned_text:
             return 0.0
 
-    # 1. QUÉT TOÀN CỤC
     global_score = get_raw_model_score(model, cleaned_text)
     
-    # 2. KIỂM TRA WHITELIST (Bảo vệ ngữ cảnh IT/Sinh viên)
     has_it_context = any(keyword in cleaned_text for keyword in IT_CONTEXT_WHITELIST)
     
-    # Nếu câu có ngữ cảnh IT an toàn, ta "khoan hồng" giảm điểm gốc xuống một chút
     if has_it_context:
-        global_score = global_score * 0.7  # Giảm 30% độ "nghi ngờ"
+        global_score = global_score * 0.7
 
     if global_score < 0.20 or global_score > TOXIC_THRESHOLD:
         return global_score
 
-    # 3. QUÉT CỤC BỘ (DEEP SCAN)
     phrases = re.split(r'[,.;?!]|\b(nhưng|mà|tuy nhiên|chứ|thì|còn)\b', cleaned_text)
     phrases = [p.strip() for p in phrases if p and len(p.strip()) > 3]
 
@@ -129,12 +141,9 @@ def deep_score_text(model, raw_text: str) -> float:
         if local_score > max_local_score:
             max_local_score = local_score
 
-    # 4. CHỐT ĐIỂM DỰA TRÊN NGỮ CẢNH
     if has_it_context:
-        # Nếu có ngữ cảnh IT, phải có vế cực kỳ độc hại (>0.8) mới bị phạt
         return max_local_score if max_local_score > 0.8 else global_score
     else:
-        # Ngữ cảnh bình thường, phạt nếu vế độc hại > 0.55
         return max_local_score if max_local_score > 0.55 else global_score
 
 for ckpt in checkpoints:

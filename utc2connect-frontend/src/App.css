@@ -66,52 +66,171 @@
    BỐ CỤC TRANG CHỦ (FACEBOOK STYLE)
    ========================================== */
 
-/* THANH NAVBAR TRÊN CÙNG TRÀN VIỀN */
+/* THANH NAVBAR TRÊN CÙNG TRÀN VIỀN — lấy cảm hứng từ mép vé tàu xé rời,
+   giữ đúng bảng màu UTC2 (navy + amber + teal) nhưng cách xử lý hiện đại hơn */
 .u2-navbar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   height: 56px;
-  background: linear-gradient(120deg, var(--navy) 0%, var(--navy-light) 100%);
-  padding: 0 16px;
+  background:
+    radial-gradient(circle at 10% -80%, rgba(255, 180, 0, 0.20), transparent 55%),
+    linear-gradient(120deg, var(--navy) 0%, var(--navy-light) 100%);
+  padding: 0 18px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   z-index: 100;
   box-shadow: 0 1px 8px rgba(16, 27, 51, 0.25);
 }
-.u2-nav-logo {
-  font-size: 22px;
-  font-weight: 700;
-  font-family: 'Bebas Neue', sans-serif;
-  color: var(--amber);
-  letter-spacing: 0.8px;
+/* Đường ray mảnh trên cùng */
+.u2-navbar::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--amber) 0%, var(--teal) 50%, var(--amber) 100%);
+  opacity: 0.75;
 }
+/* Mép sóng lượn mềm mại phía dưới navbar — điểm nhấn nhận diện riêng của thanh bar */
+.u2-navbar::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0; right: 0;
+  height: 12px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='12' viewBox='0 0 48 12'%3E%3Cpath d='M0,6 C12,0 36,12 48,6 L48,0 L0,0 Z' fill='%231C2B4A'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 48px 12px;
+  pointer-events: none;
+}
+
+/* THƯƠNG HIỆU: huy hiệu "U2" như con dấu đóng vé + wordmark 2 dòng */
+.u2-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.u2-nav-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #FFC93C 0%, var(--amber) 55%, var(--amber-dark) 100%);
+  border: 1.5px dashed rgba(16, 27, 51, 0.4);
+  color: var(--navy);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 15px;
+  transform: rotate(-6deg);
+  transition: transform 0.25s ease;
+}
+.u2-nav-brand:hover .u2-nav-mark {
+  transform: rotate(0deg);
+}
+.u2-nav-logo {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+.u2-nav-logo-top {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  color: var(--amber);
+  letter-spacing: 1px;
+}
+.u2-nav-logo b {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: rgba(255, 253, 246, 0.6);
+  margin-top: 3px;
+}
+
+/* NGƯỜI DÙNG: viên "vé mini" bo tròn, avatar chữ cái đầu + chấm trạng thái nhấp nháy */
 .u2-user-pill {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  background: rgba(255, 253, 246, 0.07);
+  border: 1px solid rgba(255, 180, 0, 0.22);
+  border-radius: 999px;
+  padding: 4px 6px 4px 4px;
+}
+.u2-user-avatar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(150deg, var(--navy-light) 0%, var(--navy) 100%);
+  border: 1px solid rgba(255, 180, 0, 0.4);
+  color: var(--amber);
+  font-weight: 700;
+  font-size: 13px;
+}
+.u2-user-avatar::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--teal);
+  border: 2px solid var(--navy);
+  animation: u2-pulse-dot 2s ease-in-out infinite;
+}
+@keyframes u2-pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(15, 139, 108, 0.55); }
+  50% { box-shadow: 0 0 0 4px rgba(15, 139, 108, 0); }
+}
+.u2-user-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
 }
 .u2-user-name {
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 700;
+  font-size: 13px;
   color: var(--paper);
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.u2-user-status {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--teal);
 }
 .u2-logout-btn {
   background: rgba(255, 253, 246, 0.12);
   color: var(--paper);
   border: 1px solid rgba(255, 180, 0, 0.4);
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
-  transition: background 0.2s, border-color 0.2s;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 .u2-logout-btn:hover {
-  background: rgba(255, 180, 0, 0.18);
+  background: var(--amber);
   border-color: var(--amber);
+  color: var(--navy);
+}
+@media (prefers-reduced-motion: reduce) {
+  .u2-user-avatar::after { animation: none; }
 }
 
 /* CHIA TRANG CHỦ THÀNH 3 CỘT */
@@ -875,11 +994,15 @@
 @media screen and (max-width: 900px) {
   /* 1. Thu gọn Navbar */
   .u2-navbar { padding: 0 10px; }
-  .u2-nav-logo { font-size: 18px; }
-  .u2-user-pill { gap: 8px; }
+  .u2-nav-mark { width: 28px; height: 28px; font-size: 13px; }
+  .u2-nav-logo-top { font-size: 15px; }
+  .u2-nav-logo b { display: none; } /* ẩn dòng "CONNECT" để tiết kiệm chỗ */
+  .u2-user-pill { gap: 6px; padding: 3px 4px 3px 4px; }
+  .u2-user-avatar { width: 28px; height: 28px; font-size: 11px; }
+  .u2-user-status { display: none; } /* ẩn dòng trạng thái, chỉ giữ chấm nhấp nháy */
   .u2-user-name {
     font-size: 12px;
-    max-width: 100px;
+    max-width: 90px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
