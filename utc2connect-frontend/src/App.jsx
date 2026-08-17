@@ -14,9 +14,10 @@ import DOMPurify from 'dompurify';
 const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_KEY);
 const backendUrl = `http://${window.location.hostname}:8081`;
 
-const socket = io(backendUrl, { 
+const socket = io('/', { 
   autoConnect: false,
-  transports: ['websocket']
+  path: '/socket.io', // Đường dẫn này trùng với cấu hình '/socket.io' trong vite.config.js
+  transports: ['websocket', 'polling'] // Nên thêm 'polling' để dự phòng nếu mạng bên ngoài chặn websocket
 });
 // Cấu hình STUN Server của Google để hỗ trợ kết nối NAT/Mạng Internet bên ngoài
 const rtcConfig = {
@@ -245,7 +246,35 @@ socket.on('message_blocked', (data) => {
       setIsSearching(false);
       setIsConnected(true);
       setChatMessages([{ sender: 'system', text: 'Hệ thống: Đã kết nối với một bạn học ẩn danh!' }]);
-
+      
+      const rtcConfig = {
+  iceServers: [
+      {
+        urls: "stun:stun.relay.metered.ca:80",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:80",
+        username: "31d00c2d771b258511393e6a",
+        credential: "cP/hRVNrNseRYzO9",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:80?transport=tcp",
+        username: "31d00c2d771b258511393e6a",
+        credential: "cP/hRVNrNseRYzO9",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:443",
+        username: "31d00c2d771b258511393e6a",
+        credential: "cP/hRVNrNseRYzO9",
+      },
+      {
+        urls: "turns:global.relay.metered.ca:443?transport=tcp",
+        username: "31d00c2d771b258511393e6a",
+        credential: "cP/hRVNrNseRYzO9",
+      },
+  ]
+};
+      
       peerConnection.current = new RTCPeerConnection(rtcConfig);
 
       // Nhận luồng video từ đối phương
@@ -1002,9 +1031,19 @@ const handleFilterChange = (type) => {
     <div className="u2-home-layout">
       {/* THANH ĐIỀU HƯỚNG TRÊN CÙNG */}
       <div className="u2-navbar">
-        <div className="u2-nav-logo">UTC2 CONNECT</div>
+        <div className="u2-nav-brand">
+          <span className="u2-nav-mark">U2</span>
+          <span className="u2-nav-logo">
+            <span className="u2-nav-logo-top">UTC2</span>
+            <b>CONNECT</b>
+          </span>
+        </div>
         <div className="u2-user-pill">
-          <span className="u2-user-name">● {userData?.username} (Trực tuyến)</span>
+          <span className="u2-user-avatar">{userData?.username?.charAt(0)?.toUpperCase() || '?'}</span>
+          <span className="u2-user-info">
+            <span className="u2-user-name">{userData?.username}</span>
+            <span className="u2-user-status">Trực tuyến</span>
+          </span>
           <button className="u2-logout-btn" onClick={handleLogout}>Đăng xuất</button>
         </div>
       </div>
