@@ -1910,6 +1910,7 @@
   position: relative;
 }
 
+ Update-new-code-04
 /* 1. Khung video của đối phương - HIỂN THỊ TOÀN BỘ không cắt góc */
 /* ==================== VIDEO NGƯỜI ĐỐI DIỆN ==================== */
 .video-box.remote-video {
@@ -1953,11 +1954,20 @@
 .u2-video-container.fullscreen-mode .video-box.remote-video video {
   object-fit: contain !important;
 }
+
+/* 1. Khung video của đối phương: Dùng 'contain' để HIỂN THỊ TRỌN VẸN, KHÔNG BỊ CẮT GÓC */
+.video-box.remote-video video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important; 
+  background: var(--navy); /* Thêm màu nền đồng bộ để che khoảng trống viền nếu có */
+}
 /* 2. Riêng khung video của bạn (PIP nhỏ góc dưới): Dùng 'cover' để LẤP ĐẦY ô chữ nhật nhỏ cho đẹp */
 .video-box.local-video video {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important; 
+Update-new-code-04
 }
 /* ==========================================================
    TỐI ƯU HÓA CHẾ ĐỘ TOÀN MÀN HÌNH (CLEAN & IMMERSIVE)

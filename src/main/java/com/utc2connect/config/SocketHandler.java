@@ -34,18 +34,25 @@ public class SocketHandler {
     private final ConcurrentHashMap<UUID, String> sessionUsernames = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, String> activeRooms = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Long> roomStartTimes = new ConcurrentHashMap<>();
+ Update-new-code-04
     private final ModerationService moderationService;
+
     @Autowired
     public SocketHandler(SocketIOServer server,
                          ReportRepository reportRepository,
                          userRepository userRepo,
+ Update-new-code-04
                          MessageRateLimiter rateLimiter,
                          ModerationService moderationService) { // 👈 THÊM PARAMETER NÀY
+
+                         MessageRateLimiter rateLimiter) { // 👈 2. Đã tiêm RateLimiter vào Constructor
         this.server = server;
         this.reportRepository = reportRepository;
         this.userRepo = userRepo;
         this.rateLimiter = rateLimiter;
+ Update-new-code-04
         this.moderationService = moderationService; // 👈 GÁN GIÁ TRỊ VÀO ĐÂY
+
     }
 
     @PostConstruct
@@ -88,6 +95,7 @@ public class SocketHandler {
         // ==================== WEBRTC SIGNALING ====================
         server.addEventListener("send_offer", WebRTCPayload.class,
                 (client, data, ack) -> server.getRoomOperations(data.getRoomID()).sendEvent("receive_offer", client, data));
+ Update-new-code-04
 
         server.addEventListener("send_answer", WebRTCPayload.class,
                 (client, data, ack) -> server.getRoomOperations(data.getRoomID()).sendEvent("receive_answer", client, data));
@@ -147,6 +155,28 @@ public class SocketHandler {
             }
 
             // ✅ NẾU QUA ĐƯỢC 2 LỚP BẢO MẬT -> Gửi tin nhắn đến các client trong phòng
+
+
+        server.addEventListener("send_answer", WebRTCPayload.class,
+                (client, data, ack) -> server.getRoomOperations(data.getRoomID()).sendEvent("receive_answer", client, data));
+
+        server.addEventListener("send_ice_candidate", WebRTCPayload.class,
+                (client, data, ack) -> server.getRoomOperations(data.getRoomID()).sendEvent("receive_ice_candidate", client, data));
+
+        // ==================== CHAT (ĐÃ TÍCH HỢP CHỐNG SPAM) ====================
+        server.addEventListener("send_message", MessagePayload.class, (client, data, ack) -> {
+            // Lấy username của client đang gửi tin (nếu chưa có thì lấy tạm SessionID)
+            String username = sessionUsernames.getOrDefault(client.getSessionId(), client.getSessionId().toString());
+
+            // 🛑 BẢO MẬT: Kiểm tra xem user có đang spam quá 5 tin/3s hay không
+            if (!rateLimiter.isAllowed(username)) {
+                System.out.println("⚠️ Phát hiện Spam từ user [" + username + "]");
+                // Gửi thông báo cảnh báo riêng cho chính user đó
+                client.sendEvent("spam_warning", "Cảnh báo: Bạn đang gửi tin nhắn quá nhanh! Vui lòng đợi chút.");
+                return; // Chặn không cho gửi tin nhắn vào phòng
+            }
+
+            // Nếu hợp lệ -> Gửi tin nhắn đến các client trong phòng
             server.getRoomOperations(data.getRoomID()).sendEvent("receive_message", client, data);
         });
 
