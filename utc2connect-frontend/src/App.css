@@ -831,7 +831,7 @@
   height: calc(100vh - 120px);
   min-height: 550px;
   box-shadow: 0 4px 20px rgba(16, 27, 51, 0.1);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .chat-header {
@@ -845,6 +845,7 @@
   color: var(--paper);
   background: linear-gradient(120deg, var(--navy) 0%, var(--navy-light) 100%);
   border-bottom: 3px solid var(--amber);
+  border-radius: 12px 12px 0 0;
 }
 
 .chat-messages {
@@ -922,6 +923,7 @@
   display: flex;
   width: 100%;
   box-sizing: border-box; /* Đảm bảo padding không làm tràn width */
+  border-radius: 0 0 12px 12px;
 }
 
 /* Hàng chứa input và nút gửi */
@@ -1083,10 +1085,28 @@
     border: 1px solid #E1E0D6 !important;
     animation: u2-slide-down 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
   }
-  .u2-picker-popup .EmojiPickerReact.EmojiPickerReact,
+  .u2-picker-popup .EmojiPickerReact.EmojiPickerReact {
+  width: 100%;
+  height: 380px;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  box-sizing: border-box;
+  background: var(--paper); /* Đồng bộ nền màu giấy[cite: 1] */
+  border-radius: 12px;
+}
   .u2-gif-wrapper {
-    height: 100% !important;
-  }
+  width: 100%;
+  height: 380px;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 12px 12px; /* 👈 giữ chỗ nhỏ cho decal "GIF" dán góc kính trên mobile */
+  box-sizing: border-box;
+  background: var(--paper);
+  border: 3px solid var(--navy);
+  border-radius: 18px 18px 8px 8px; /* dáng cửa sổ toa tàu, thu gọn hơn cho màn nhỏ */
+  box-shadow: inset 0 0 0 2px var(--amber);
+}
   /* Tự động kéo dài khung chat khi mở Emoji/GIF để tin nhắn không bị ép bẹp.
      Trình duyệt cũ không hỗ trợ :has() sẽ tự bỏ qua dòng này, không gây lỗi. */
   .u2-chat-sidebar:has(.u2-picker-popup) {
@@ -1614,63 +1634,149 @@
 }
 
 
-/* Giao diện riêng cho bảng chọn GIF */
+/* Giao diện riêng cho bảng chọn GIF — mô típ "CỬA SỔ TOA TÀU":
+   khung thép navy dày, bo vòm ở đỉnh như cửa sổ tàu hoả, viền đồng/vàng bên trong mặt kính,
+   và một vệt sáng hắt chéo qua như nắng chiếu qua ô kính. */
 .u2-gif-wrapper {
+  position: relative;
   width: 100%;
   height: 380px;
   display: flex;
   flex-direction: column;
-  padding: 12px;
+  padding: 30px 12px 14px; /* 👈 chừa chỗ trên cho decal "GIF" dán góc kính */
   box-sizing: border-box;
+  background: var(--paper);
+  border: 4px solid var(--navy);
+  border-radius: 22px 22px 10px 10px; /* vòm cong ở đỉnh, đáy bo nhẹ — dáng cửa sổ toa tàu */
+  box-shadow:
+    inset 0 0 0 2px var(--amber),               /* viền đồng/vàng bên trong khung thép, như nẹp trang trí toa tàu */
+    inset 0 16px 26px -8px rgba(16,27,51,0.3);  /* bóng đổ hắt vào như mặt kính hơi lõm/cong */
+  overflow: hidden;
+}
+
+/* Vệt sáng hắt chéo qua mặt kính — mô phỏng nắng chiếu qua cửa sổ toa tàu */
+.u2-gif-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    rgba(255,255,255,0.55) 0%,
+    transparent 24%,
+    transparent 80%,
+    rgba(16,27,51,0.06) 100%
+  );
+  pointer-events: none;
+}
+
+/* Decal nhỏ "GIF" dán trên kính, ở góc — thay cho thanh tiêu đề to bản trước */
+.u2-gif-wrapper::after {
+  content: 'GIF';
+  position: absolute;
+  top: 7px; right: 12px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  color: var(--amber-dark);
+  background: rgba(255, 180, 0, 0.16);
+  padding: 2px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 180, 0, 0.45);
+  pointer-events: none;
+}
+
+/* Khi popup đang bọc bảng GIF: nới khung ngoài khớp với vòm cửa sổ bên trong,
+   bỏ viền + shadow mặc định vì khung navy đậm bên trong đã là điểm nhấn chính.
+   (:has() không đụng tới bảng Emoji vì selector chỉ khớp khi có .u2-gif-wrapper bên trong) */
+.u2-picker-popup:has(.u2-gif-wrapper) {
+  border: none;
+  border-radius: 24px 24px 12px 12px;
+  box-shadow: 0 16px 36px rgba(16, 27, 51, 0.3);
 }
 
 /* Khung ô tìm kiếm GIF: bắt chước y hệt ô nhập tin nhắn (u2-input), có icon kính lúp */
+/* Khung ô tìm kiếm GIF */
 .u2-gif-search-box {
   position: relative;
   flex: 0 0 auto;
-  margin-bottom: 10px;
+  margin-bottom: 12px; /* Tăng khoảng cách với lưới ảnh một chút */
 }
 .u2-gif-search-icon {
   position: absolute;
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 13px;
-  opacity: 0.55;
+  font-size: 14px;
+  color: var(--ink-muted); /*[cite: 1] */
+  opacity: 0.7;
   pointer-events: none;
+  transition: color 0.2s;
 }
 .u2-gif-search {
   width: 100%;
-  padding: 10px 14px 10px 34px;
-  border: 1.5px solid #E1E0D6;
-  border-radius: 20px;
-  background: #FBFAF4;
-  font-size: 14px;
+  padding: 10px 14px 10px 36px;
+  border: 1.5px solid #E1E0D6; /*[cite: 1] */
+  border-radius: 20px; /*[cite: 1] */
+  background: #FBFAF4; /*[cite: 1] */
+  font-size: 14px; /*[cite: 1] */
   outline: none;
-  color: var(--ink);
+  color: var(--ink); /*[cite: 1] */
   box-sizing: border-box;
-  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  transition: all 0.2s ease;
 }
-.u2-gif-search::placeholder { color: #B7B4A6; }
+.u2-gif-search::placeholder { 
+  color: #B7B4A6; /*[cite: 1] */
+}
 
 .u2-gif-search:focus {
-  border-color: var(--amber); /* Dùng màu vàng đặc trưng UTC2 khi focus */
-  box-shadow: 0 0 0 3px rgba(255, 180, 0, 0.18);
-  background: var(--paper);
+  border-color: var(--amber); /*[cite: 1] */
+  box-shadow: 0 0 0 3px rgba(255, 180, 0, 0.18); /*[cite: 1] */
+  background: var(--paper); /*[cite: 1] */
 }
-
+.u2-gif-search-box:focus-within .u2-gif-search-icon {
+  color: var(--amber-dark); /*[cite: 1] */
+  opacity: 1;
+}
 /* Thanh cuộn cho lưới GIF - flex:1 để không đẩy khoảng trắng thừa lên trên ô search */
 .u2-gif-grid-container {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+  border-radius: 8px;
+  padding-right: 4px; /* Chừa chỗ cho scrollbar thở */
+}
+/* Thanh cuộn (Scrollbar) chuẩn phong cách UTC2 */
+.u2-gif-grid-container::-webkit-scrollbar { 
+  width: 6px; /*[cite: 1] */
+}
+.u2-gif-grid-container::-webkit-scrollbar-track {
+  background: rgba(255, 180, 0, 0.05); /* Tông vàng cực nhạt cho rãnh trượt */
   border-radius: 6px;
 }
-.u2-gif-grid-container::-webkit-scrollbar { width: 6px; }
 .u2-gif-grid-container::-webkit-scrollbar-thumb {
-  background: #E1E0D6;
-  border-radius: 3px;
+  background: rgba(16, 27, 51, 0.15); /*[cite: 1] */
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+.u2-gif-grid-container::-webkit-scrollbar-thumb:hover {
+  background: var(--amber); /* Vuốt lên thanh cuộn sẽ sáng màu vàng[cite: 1] */
+}
+
+/* Bo góc và thêm hiệu ứng nổi (hover) cho từng ảnh GIF của thư viện Giphy */
+.u2-gif-grid-container .giphy-gif {
+  border-radius: 8px !important;
+  overflow: hidden;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease !important;
+  cursor: pointer;
+  border: 1px solid rgba(16, 27, 51, 0.05);
+}
+
+.u2-gif-grid-container .giphy-gif:hover {
+  transform: scale(1.04) translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(255, 180, 0, 0.35) !important; /* Bóng vàng khi di chuột qua */
+  z-index: 10;
+  border-color: var(--amber);
 }
 /* ==========================================================
    TỐI ƯU MÀN HÌNH ĐIỆN THOẠI QUAY NGANG (SỬA LỖI ÉP BẸP)
@@ -1917,4 +2023,82 @@
   .u2-video-container {
     height: 100% !important;
   }
+}
+/* ==========================================================
+   TÍNH NĂNG GỢI Ý GIF TỰ ĐỘNG (GỌN GÀNG - COMPACT)
+   ========================================================== */
+.u2-inline-gif-suggestions {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  margin-bottom: 8px; /* Ép sát ô chat hơn */
+  background: var(--paper);
+  border: 1px solid #E1E0D6; /* Viền mỏng nhẹ tinh tế */
+  border-radius: 12px;
+  box-shadow: 0 -4px 16px rgba(16, 27, 51, 0.08); /* Bóng nhạt hơn */
+  z-index: 101;
+  overflow: hidden;
+  animation: u2-slide-up-suggest 0.2s ease-out;
+}
+
+@keyframes u2-slide-up-suggest {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* NÚT TẮT NỔI LƠ LỬNG (FLOATING CLOSE BUTTON) */
+.u2-inline-gif-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 10;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(16, 27, 51, 0.5); /* Nền tối mờ nhẹ */
+  backdrop-filter: blur(4px);        /* Hiệu ứng kính kính trong suốt */
+  color: #fff;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.u2-inline-gif-close:hover {
+  background: var(--red);
+  transform: scale(1.15);
+}
+
+.u2-inline-gif-carousel {
+  padding: 6px; /* Ép lề mỏng lại cho gọn */
+  padding-right: 20px; /* Chừa một tí chỗ trống bên phải để nút X không đè mất ảnh cuối */
+}
+
+.u2-inline-gif-carousel .giphy-gif {
+  border-radius: 6px !important;
+  cursor: pointer;
+  border: 1px solid rgba(16, 27, 51, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.u2-inline-gif-carousel .giphy-gif:hover {
+  transform: scale(1.02) translateY(-2px);
+  box-shadow: 0 4px 10px rgba(255, 180, 0, 0.3);
+  z-index: 10;
+  border-color: var(--amber);
+}
+
+/* Custom thanh trượt ngang siêu mỏng */
+.u2-inline-gif-carousel div::-webkit-scrollbar { height: 4px; }
+.u2-inline-gif-carousel div::-webkit-scrollbar-track { background: transparent; }
+.u2-inline-gif-carousel div::-webkit-scrollbar-thumb {
+  background: rgba(16, 27, 51, 0.12);
+  border-radius: 10px;
+}
+.u2-inline-gif-carousel div::-webkit-scrollbar-thumb:hover {
+  background: var(--amber);
 }
