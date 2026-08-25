@@ -1,12 +1,16 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import io from 'socket.io-client'; // Thêm thư viện socket.io-client
 import './App.css';
 import EmojiPicker, { Categories } from 'emoji-picker-react';
-import { Grid } from '@giphy/react-components';
 import { GiphyFetch } from '@giphy/js-fetch-api';
 import DOMPurify from 'dompurify';
+import GifPicker from './components/GifPicker';
+import { Grid, Carousel } from '@giphy/react-components'; // Thêm Carousel
+import { searchGifs } from './services/giphy';            // Thêm API search
+import useDebounce from './hooks/useDebounce';            // Thêm custom hook
 
+// Các import khác giữ nguyên...
 // Khởi tạo Giphy API (Nên dùng key của riêng bạn)
 const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_KEY);
 const backendUrl = `http://${window.location.hostname}:8081`;
@@ -71,18 +75,20 @@ const [searchElapsed, setSearchElapsed] = useState(0);
 const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 const [showGifPicker, setShowGifPicker] = useState(false);
 const [gifSearchTerm, setGifSearchTerm] = useState('');
+const debouncedChatInput = useDebounce(chatInput, 600); // Đợi 600ms sau khi ngừng gõ mới tìm
+const [hideAutoGif, setHideAutoGif] = useState(false);  // Dùng để ẩn gợi ý nếu user bấm tắt (X)
 // THÊM 2 DÒNG NÀY VÀO:
 const [showOtpModal, setShowOtpModal] = useState(false);
 const [deviceOtp, setDeviceOtp] = useState('');
 // Nếu có từ khóa thì gọi API search, nếu không có thì gọi API trending
 // Nếu có từ khóa thì gọi API search, nếu không có thì gọi API trending
-const fetchGifs = (offset) => {
-  if (gifSearchTerm.trim()) {
+//const fetchGifs = (offset) => {
+  //if (gifSearchTerm.trim()) {
     // Thêm tham số lang: 'vi' vào đây để Giphy trả kết quả theo tiếng Việt
-    return gf.search(gifSearchTerm, { offset, limit: 10, lang: 'vi' });
-  }
-  return gf.trending({ offset, limit: 10 });
-};
+   // return gf.search(gifSearchTerm, { offset, limit: 10, lang: 'vi' });
+  //}
+  //return gf.trending({ offset, limit: 10 });
+//};
   // Kiểm tra "vé" (JWT) đã hết hạn hay chưa, chỉ đọc phần payload (không cần verify chữ ký,
   // việc verify thật sự vẫn do backend làm) — dùng để tự phát hiện sớm ở phía Client.
   const isTokenExpired = (token) => {
@@ -414,6 +420,60 @@ socket.on('message_blocked', (data) => {
     };
   }, [loginSuccess]);
   useEffect(() => {
+    if (chatInput.trim().length > 0) {
+      setHideAutoGif(false);
+    }
+  }, [chatInput]);
+
+  // 1. TẠO BỘ TỪ ĐIỂN DỊCH NGẦM TỪ TIẾNG VIỆT SANG TIẾNG ANH CHO GIPHY
+  const mapVietnameseToGiphy = (text) => {
+    const lowerText = text.toLowerCase().trim();
+
+    // Bạn có thể tự do thêm bớt từ vựng vào danh sách này
+    const dictionary = {
+      'hello': ['chào', 'xin chào', 'hi', 'alo', 'helo', 'hé lô'],
+      'laugh': ['cười', 'haha', 'hihi', 'hehe', 'lmao', 'kaka', 'mắc cười','kkk'],
+      'sad': ['buồn', 'chán', 'khóc', 'tủi thân', 'rớt nước mắt', 'huhu'],
+      'angry': ['tức', 'giận', 'cáu', 'điên', 'quạu', 'bực', 'ghét'],
+      'love': ['yêu', 'thích', 'thả tim', 'iu', 'mãi yêu', 'yêu quá'],
+      'sleep': ['ngủ', 'buồn ngủ', 'ngáp', 'khò'],
+      'eat': ['ăn', 'đói', 'măm', 'thèm ăn'],
+      'ok': ['ok', 'oke', 'được', 'duyệt', 'nhất trí', 'triển'],
+      'facepalm': ['bó tay', 'cạn lời', 'chịu', 'bất lực', 'chán nản', 'bó chiếu'],
+      'wow': ['wow', 'đỉnh', 'xuất sắc', 'ghê', 'đỉnh quá', 'ngạc nhiên'],
+      'congratulations': ['chúc mừng', 'tuyệt vời', 'tung hoa', 'giỏi'],
+      'sorry': ['xin lỗi', 'sorry', 'sory', 'xl', 'tội lỗi'],
+      'bye': ['tạm biệt', 'bye', 'bai', 'pp', 'đi ngủ đây'],
+      'what': ['cái gì', 'hả', 'ủa', 'what', 'sao', 'là sao'],
+      'no': ['không', 'đéo', 'éo', 'no', 'chê', 'đừng'],
+      'yes': ['có', 'dạ', 'vâng', 'yes', 'chuẩn'],
+      'dance': ['quẩy', 'nhảy', 'lên luôn', 'phiêu'],
+      'cry': ['khóc', 'huhu', 'mít ướt', 'nước mắt']
+    };
+
+    // Quét xem câu người dùng gõ có chứa từ khóa tiếng Việt nào không
+    for (const [enWord, vnWords] of Object.entries(dictionary)) {
+      if (vnWords.some(vw => lowerText.includes(vw))) {
+        return enWord; // Trả về từ tiếng Anh tương ứng để Giphy hiểu
+      }
+    }
+
+    return lowerText; // Nếu không nằm trong từ điển, cứ mang nguyên chữ VN đi tìm
+  };
+
+  // 2. CẬP NHẬT LẠI HÀM GỌI API ĐỂ SỬ DỤNG BỘ TỪ ĐIỂN
+  const fetchAutoGifs = useCallback((offset) => {
+    if (!debouncedChatInput || debouncedChatInput.trim().length < 2) {
+      return Promise.resolve({ data: [] });
+    }
+
+    // Đưa chữ VN qua máy lọc để lấy chữ Tiếng Anh
+    const smartQuery = mapVietnameseToGiphy(debouncedChatInput);
+    
+    // Gửi chữ tiếng Anh lên Giphy
+    return searchGifs(smartQuery, { offset, limit: 10 });
+  }, [debouncedChatInput]);
+  useEffect(() => {
   if (!isSearching) { setSearchElapsed(0); return; }
   const interval = setInterval(() => setSearchElapsed(prev => prev + 1), 1000);
   return () => clearInterval(interval);
@@ -594,23 +654,21 @@ const getDeviceId = () => {
     return deviceId;
 };
 // Xử lý khi user bấm chọn 1 ảnh GIF
-const handleGifClick = (gif, e) => {
-  e.preventDefault();
-  // Lấy URL của ảnh GIF
-  const gifUrl = gif.images.fixed_height.url; 
-
-  // Gửi ngay lập tức qua Socket.IO với type: 'gif'
+// Thay thế hàm cũ bằng đoạn này:
+const handleGifClick = (gif) => {
+  // Lấy URL an toàn
+  const gifUrl = gif?.images?.fixed_height?.url || gif?.images?.original?.url;
+  if (!gifUrl) return;
+  // Gửi lên server
   socket.emit('send_message', {
     roomID: roomID,
     type: 'gif',
     content: gifUrl
   });
-
-  // Cập nhật lên màn hình của chính mình
+  // Hiển thị ở client
   setChatMessages(prev => [...prev, { sender: 'me', text: gifUrl, type: 'gif' }]);
-  
-  // Đóng bảng chọn GIF
-  setShowGifPicker(false); 
+  setShowGifPicker(false);
+  setGifSearchTerm('');
 };
 // Danh sách lý do report — sát với bối cảnh sinh viên UTC2
 const REPORT_REASONS = [
@@ -1206,8 +1264,33 @@ const handleFilterChange = (type) => {
     </div>
   ))}
 </div>
-          <div className="chat-input-area">
+         <div className="chat-input-area">
             <div className="chat-toolbar-container" style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+  
+               {/* --- BẢNG GỢI Ý GIF TỰ ĐỘNG (GỌN GÀNG NHƯ TIKTOK) --- */}
+              {debouncedChatInput.trim().length >= 2 && !hideAutoGif && (
+                <div className="u2-inline-gif-suggestions">
+                  
+                  {/* Nút X nổi lơ lửng góc phải (Floating Button) */}
+                  <button className="u2-inline-gif-close" onClick={() => setHideAutoGif(true)} title="Đóng">✕</button>
+
+                  <div className="u2-inline-gif-carousel">
+                    <Carousel
+                      key={debouncedChatInput}
+                      fetchGifs={fetchAutoGifs}
+                      gifHeight={85} /* 👈 Đã giảm từ 110 xuống 85 để dải GIF lùn & gọn hơn */
+                      gutter={4}     /* 👈 Giảm khoảng cách giữa các ảnh */
+                      noLink={true}
+                      onGifClick={(gif, e) => {
+                        e.preventDefault();
+                        handleGifClick(gif);
+                        setChatInput('');
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+              {/* ------------------------------------------- */}
   
   {/* BẢNG CHỌN EMOJI */}
 {showEmojiPicker && (
@@ -1238,35 +1321,12 @@ const handleFilterChange = (type) => {
 
 {/* BẢNG CHỌN GIF */}
 {showGifPicker && (
-  <div className="u2-picker-popup">
-    <div className="u2-gif-wrapper">
-
-      {/* Ô tìm kiếm GIF (đồng bộ style ô nhập u2-input) */}
-      <div className="u2-gif-search-box">
-        <span className="u2-gif-search-icon">🔍</span>
-        <input
-          className="u2-gif-search"
-          type="text"
-          placeholder="Tìm kiếm GIF..."
-          value={gifSearchTerm}
-          onChange={(e) => setGifSearchTerm(e.target.value)}
-          autoFocus
-        />
-      </div>
-
-      {/* Vùng chứa lưới ảnh cuộn được */}
-      <div className="u2-gif-grid-container">
-        <Grid 
-          key={gifSearchTerm} 
-          width={276} /* Đã trừ hao padding 12px x 2 của container 300px */
-          columns={2} 
-          gutter={8}
-          fetchGifs={fetchGifs} 
-          onGifClick={handleGifClick} 
-        />
-      </div>
-    </div>
-  </div>
+  <GifPicker
+    open={showGifPicker}
+    initialQuery={gifSearchTerm}
+    onSelect={(gif) => handleGifClick(gif)}
+    width={276}
+  />
 )}
 
   {/* CÁC NÚT MỞ MENU CÔNG CỤ */}
