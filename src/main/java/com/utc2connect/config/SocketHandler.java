@@ -30,8 +30,11 @@ public class SocketHandler {
     // Hàng đợi matchmaking
     private final ConcurrentLinkedQueue<SocketIOClient> waitingUsers = new ConcurrentLinkedQueue<>();
 
+    private static final String CHAT_ALL_ROOM = "chat_all";
+
     // Mapping
     private final ConcurrentHashMap<UUID, String> sessionUsernames = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, String> chatAllUsers = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, String> activeRooms = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Long> roomStartTimes = new ConcurrentHashMap<>();
     private final ModerationService moderationService;
@@ -219,6 +222,35 @@ public class SocketHandler {
             }
         });
 
+        server.addEventListener("join_chat_all", String.class, (client, username, ack) -> {
+            String name = username != null && !username.isBlank()
+                    ? username
+                    : sessionUsernames.getOrDefault(client.getSessionId(), "Khách");
+            chatAllUsers.put(client.getSessionId(), name);
+            sessionUsernames.putIfAbsent(client.getSessionId(), name);
+            client.joinRoom(CHAT_ALL_ROOM);
+            broadcastChatAllPresence();
+        });
+
+        server.addEventListener("leave_chat_all", String.class, (client, username, ack) -> {
+            chatAllUsers.remove(client.getSessionId());
+            client.leaveRoom(CHAT_ALL_ROOM);
+            broadcastChatAllPresence();
+        });
+
+        server.addEventListener("send_chat_all", GlobalChatPayload.class, (client, data, ack) -> {
+            if (data == null || data.getContent() == null || data.getContent().isBlank()) return;
+            String sender = chatAllUsers.getOrDefault(client.getSessionId(),
+                    sessionUsernames.getOrDefault(client.getSessionId(), data.getSender()));
+            data.setSender(sender);
+            if (data.getCreatedAt() == null) data.setCreatedAt(System.currentTimeMillis());
+            for (SocketIOClient c : server.getRoomOperations(CHAT_ALL_ROOM).getClients()) {
+                if (!c.getSessionId().equals(client.getSessionId())) {
+                    c.sendEvent("chat_all_message", data);
+                }
+            }
+        });
+
         server.start();
     }
 
@@ -263,9 +295,18 @@ public class SocketHandler {
         waitingUsers.remove(client);
     }
 
+    private void broadcastChatAllPresence() {
+        server.getRoomOperations(CHAT_ALL_ROOM).sendEvent("chat_all_presence",
+                Map.of("online", chatAllUsers.values()));
+    }
+
     private void cleanupClient(SocketIOClient client) {
         waitingUsers.remove(client);
         sessionUsernames.remove(client.getSessionId());
+        if (chatAllUsers.remove(client.getSessionId()) != null) {
+            client.leaveRoom(CHAT_ALL_ROOM);
+            broadcastChatAllPresence();
+        }
         String roomID = activeRooms.remove(client.getSessionId());
         if (roomID != null) {
             server.getRoomOperations(roomID).sendEvent("peer_disconnected");
@@ -339,5 +380,15 @@ public class SocketHandler {
     public static class FilterPayload {
         private String roomID;
         private String filterType;
+    }
+
+    @Data
+    public static class GlobalChatPayload {
+        private String id;
+        private String sender;
+        private String content;
+        private String type;
+        private Object replyTo;
+        private Long createdAt;
     }
 }

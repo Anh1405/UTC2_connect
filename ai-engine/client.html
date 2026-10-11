@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Voice Moderation Client Demo</title>
+</head>
+<body style="font-family: sans-serif; padding: 20px;">
+  <h2>Voice Moderation Demo (Cắt mỗi 15s)</h2>
+  <button id="btnStart" onclick="startCall()">Bắt đầu cuộc gọi</button>
+  <button id="btnStop" onclick="stopCall()" disabled>Kết thúc cuộc gọi</button>
+  
+  <div id="status" style="margin-top: 20px; font-weight: bold;">Trạng thái: Chưa kết nối</div>
+  <div id="strikes" style="color: red; margin-top: 10px;">Số lần vi phạm: 0 / 3</div>
+  <ul id="log" style="margin-top: 20px; font-family: monospace;"></ul>
+
+  <script>
+    let mediaRecorder = null;
+    let audioStream = null;
+    let audioChunks = [];
+    let callInterval = null;
+    
+    // Tạo mã cuộc gọi cố định cho cả phiên
+    const CALL_ID = "call_" + Math.random().toString(36).substring(2, 9);
+    const CALLER_ID = "user_A";
+    let strikeCount = 0;
+
+    async function startCall() {
+      try {
+        audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        document.getElementById("btnStart").disabled = true;
+        document.getElementById("btnStop").disabled = false;
+        document.getElementById("status").innerText = "Trạng thái: Đang trong cuộc gọi (Call ID: " + CALL_ID + ")";
+        
+        // Bắt đầu chu kỳ ghi âm 15 giây
+        recordSegment();
+        callInterval = setInterval(recordSegment, 15000);
+      } catch (err) {
+        alert("Không thể truy cập Microphone: " + err.message);
+      }
+    }
+
+    function recordSegment() {
+      // Nếu recorder cũ đang chạy, dừng lại để kích hoạt event onstop gửi data
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+      }
+
+      audioChunks = [];
+      mediaRecorder = new MediaRecorder(audioStream, { mimeType: 'audio/webm' });
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunks.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        if (audioBlob.size > 1000) { // Bỏ qua nếu file quá nhỏ / rỗng
+          await sendAudioToModeration(audioBlob);
+        }
+      };
+
+      mediaRecorder.start();
+      addLog("🎙️ Đang thu đoạn 15s tiếp theo...");
+    }
+
+    async function sendAudioToModeration(blob) {
+      addLog("📤 Đang gửi audio lên server kiểm duyệt...");
+      const formData = new FormData();
+      formData.append("file", blob, `segment_${Date.now()}.webm`);
+      formData.append("call_id", CALL_ID);
+      formData.append("caller_id", CALLER_ID);
+
+      try {
+        const response = await fetch("http://127.0.0.1:8000/moderate-audio", {
+          method: "POST",
+          body: formData
+        });
+        const result = await response.json();
+        handleModerationResult(result);
+      } catch (error) {
+        addLog("❌ Lỗi gửi API: " + error.message);
+      }
+    }
+
+    function handleModerationResult(result) {
+      addLog(`🗣️ [Transcript]: "${result.transcript || '(Im lặng)'}"`);
+
+      if (result.is_toxic) {
+        strikeCount += result.total_violations;
+        document.getElementById("strikes").innerText = `Số lần vi phạm: ${strikeCount} / 3`;
+        
+        // Logic cảnh báo & Kick
+        if (strikeCount >= 3) {
+          alert("🚨 BẠN ĐÃ VI PHẠM 3 LẦN. Cuộc gọi bị buộc chấm dứt!");
+          stopCall();
+        } else {
+          alert(`⚠️ CẢNH BÁO (${strikeCount}/3): Phát hiện ngôn từ vi phạm quy tắc cộng đồng!`);
+        }
+      } else {
+        addLog("✅ Nội dung an toàn.");
+      }
+    }
+
+    function stopCall() {
+      clearInterval(callInterval);
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+      }
+      if (audioStream) {
+        audioStream.getTracks().forEach(track => track.stop());
+      }
+      document.getElementById("btnStart").disabled = false;
+      document.getElementById("btnStop").disabled = true;
+      document.getElementById("status").innerText = "Trạng thái: Cuộc gọi đã kết thúc.";
+      addLog("🛑 Đã ngắt cuộc gọi.");
+    }
+
+    function addLog(msg) {
+      const li = document.createElement("li");
+      li.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      document.getElementById("log").prepend(li);
+    }
+  </script>
+</body>
+</html>

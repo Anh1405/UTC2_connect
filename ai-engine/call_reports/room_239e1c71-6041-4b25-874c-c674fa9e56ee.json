@@ -1,0 +1,12 @@
+{
+  "call_id": "room_239e1c71-6041-4b25-874c-c674fa9e56ee",
+  "caller_id": "Nguyễn Trường Giang",
+  "receiver_id": "Nguyễn Lê Quốc Anh",
+  "timestamp": "2026-10-10T20:32:43.966576",
+  "full_transcript": "ủa mày không có não hả",
+  "is_toxic": false,
+  "toxic_segments_count": 0,
+  "violations": [],
+  "chunks_count": 2,
+  "last_updated": "2026-10-10T20:32:53.784317"
+}

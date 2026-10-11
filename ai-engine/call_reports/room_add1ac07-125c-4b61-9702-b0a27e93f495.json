@@ -1,0 +1,40 @@
+{
+  "call_id": "room_add1ac07-125c-4b61-9702-b0a27e93f495",
+  "caller_id": "Nguyễn Trường Giang",
+  "receiver_id": "Nguyễn Lê Quốc Anh",
+  "timestamp": "2026-10-10T20:21:12.060630",
+  "full_transcript": "thằng lồn thằng lồn hello a lô con cặc vãi lồn",
+  "is_toxic": true,
+  "toxic_segments_count": 3,
+  "violations": [
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 4.5,
+      "text": "thằng lồn thằng lồn",
+      "score": 0.99,
+      "evidence_clip": "room_add1ac07-125c-4b61-9702-b0a27e93f495_seg0_7a3436.mp3",
+      "chunk_index": 1
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 6.96,
+      "text": "con cặc",
+      "score": 0.99,
+      "evidence_clip": "room_add1ac07-125c-4b61-9702-b0a27e93f495_seg0_37294c.mp3",
+      "chunk_index": 4
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 6.96,
+      "text": "vãi lồn",
+      "score": 0.99,
+      "evidence_clip": "room_add1ac07-125c-4b61-9702-b0a27e93f495_seg0_cfc0a3.mp3",
+      "chunk_index": 5
+    }
+  ],
+  "chunks_count": 5,
+  "last_updated": "2026-10-10T20:22:03.931999"
+}

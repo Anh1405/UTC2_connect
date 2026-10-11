@@ -20,6 +20,8 @@ public class User {
     @Column(nullable = false)
     private String username;
     private String password;
+    private String displayName;
+    private String phone;
     private String khoaNganh;
     private String namHoc;
     @Enumerated(EnumType.STRING)

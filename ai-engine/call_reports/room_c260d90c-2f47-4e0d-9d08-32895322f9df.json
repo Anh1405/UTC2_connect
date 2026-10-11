@@ -1,0 +1,40 @@
+{
+  "call_id": "room_c260d90c-2f47-4e0d-9d08-32895322f9df",
+  "caller_id": "Nguyễn Lê Quốc Anh",
+  "receiver_id": "Nguyễn Trường Giang",
+  "timestamp": "2026-10-03T01:25:50.961508",
+  "full_transcript": "anh hùng alo alo con cặn con cặc địt mẹ chào ồ mày không có nẻo hả bộ mày không có nẻo hỉ bộ vây không có cách mạng hả bộ mày không có não hả chào mừng chào chào chào chào em địt con mẹ",
+  "is_toxic": true,
+  "toxic_segments_count": 3,
+  "violations": [
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 6.96,
+      "text": "con cặc",
+      "score": 0.99,
+      "evidence_clip": "room_c260d90c-2f47-4e0d-9d08-32895322f9df_seg0_e16f31.mp3",
+      "chunk_index": 5
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 6.96,
+      "text": "địt mẹ",
+      "score": 0.99,
+      "evidence_clip": "room_c260d90c-2f47-4e0d-9d08-32895322f9df_seg0_eca45a.mp3",
+      "chunk_index": 7
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 6.96,
+      "text": "địt con mẹ",
+      "score": 0.99,
+      "evidence_clip": "room_c260d90c-2f47-4e0d-9d08-32895322f9df_seg0_c6d6aa.mp3",
+      "chunk_index": 37
+    }
+  ],
+  "chunks_count": 38,
+  "last_updated": "2026-10-03T01:30:01.220580"
+}

@@ -1,0 +1,20 @@
+src/
+├── App.jsx                  ← chỉ còn ghép hooks + layout
+├── config/                  appConfig, rtcConfig, navigation, reportReasons
+├── data/campusDefaults.js   dữ liệu mặc định chợ cũ / phòng trọ
+├── services/socket.js       socket dùng chung
+├── api/authApi.js           các request đăng nhập/đăng ký/OTP
+├── utils/                   token, formatTime, gifKeywords, chatFilter
+├── hooks/
+│   ├── useAuth              đăng nhập, đăng ký, quên mật khẩu, OTP thiết bị lạ
+│   ├── useRandomCall        ghép cặp + WebRTC
+│   ├── useVoiceModeration   ghi âm và gửi lên api.py
+│   ├── useVoiceViolations   đếm vi phạm giọng nói, tự kết thúc cuộc gọi sau 3 lần
+│   ├── useChat              chat, emoji, GIF
+│   ├── useReport            tố cáo vi phạm
+│   ├── useCameraFilters, useLocalCamera
+│   └── useCampusData, usePersistentState, useLatest
+└── components/
+    ├── auth/                AuthScreen, Login/Register/ForgotPasswordForm, OtpInput, DeviceOtpModal
+    ├── layout/              Navbar, Sidebar
+    └── call/                CallSection, RemoteVideoBox, DepartureBoard, ChatPanel, CallControls, CameraFilterMenu, ReportModal

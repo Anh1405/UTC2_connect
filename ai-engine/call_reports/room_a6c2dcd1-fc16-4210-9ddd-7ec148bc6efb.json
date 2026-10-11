@@ -1,0 +1,40 @@
+{
+  "call_id": "room_a6c2dcd1-fc16-4210-9ddd-7ec148bc6efb",
+  "caller_id": "Nguyễn Lê Quốc Anh",
+  "receiver_id": "Nguyễn Trường Giang",
+  "timestamp": "2026-10-03T00:32:12.550419",
+  "full_transcript": "đánh lộn à lồn vãi lồn đánh luôn vãi lồn alo alo",
+  "is_toxic": true,
+  "toxic_segments_count": 3,
+  "violations": [
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 6.96,
+      "text": "à lồn",
+      "score": 0.99,
+      "evidence_clip": "room_a6c2dcd1-fc16-4210-9ddd-7ec148bc6efb_seg0_67361e.mp3",
+      "chunk_index": 2
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 6.96,
+      "text": "vãi lồn",
+      "score": 0.99,
+      "evidence_clip": "room_a6c2dcd1-fc16-4210-9ddd-7ec148bc6efb_seg0_a9ddcc.mp3",
+      "chunk_index": 3
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 6.96,
+      "text": "vãi lồn",
+      "score": 0.99,
+      "evidence_clip": "room_a6c2dcd1-fc16-4210-9ddd-7ec148bc6efb_seg0_56a216.mp3",
+      "chunk_index": 6
+    }
+  ],
+  "chunks_count": 7,
+  "last_updated": "2026-10-03T00:32:48.322015"
+}

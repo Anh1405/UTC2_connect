@@ -1,0 +1,22 @@
+{
+  "call_id": "room_2295df18-d5ea-496c-8240-5a882192d785",
+  "caller_id": "Nguyễn Trường Giang",
+  "receiver_id": "Nguyễn Lê Quốc Anh",
+  "timestamp": "2026-10-10T20:58:04.761975",
+  "full_transcript": "alo ấy whow ái con không con cảm ơn địt mẹ con mẹ ai cả",
+  "is_toxic": true,
+  "toxic_segments_count": 1,
+  "violations": [
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 5.46,
+      "text": "địt mẹ con mẹ",
+      "score": 0.99,
+      "evidence_clip": "room_2295df18-d5ea-496c-8240-5a882192d785_seg0_2745b3.mp3",
+      "chunk_index": 7
+    }
+  ],
+  "chunks_count": 10,
+  "last_updated": "2026-10-10T20:58:36.154521"
+}

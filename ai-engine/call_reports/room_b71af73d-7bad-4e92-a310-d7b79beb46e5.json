@@ -1,0 +1,31 @@
+{
+  "call_id": "room_b71af73d-7bad-4e92-a310-d7b79beb46e5",
+  "caller_id": "Nguyễn Trường Giang",
+  "receiver_id": "Nguyễn Lê Quốc Anh",
+  "timestamp": "2026-10-10T21:29:51.422686",
+  "full_transcript": "a lô a lô ok con cặc đó là con rượu mẹ",
+  "is_toxic": true,
+  "toxic_segments_count": 2,
+  "violations": [
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 4.14,
+      "text": "con cặc",
+      "score": 0.99,
+      "evidence_clip": "room_b71af73d-7bad-4e92-a310-d7b79beb46e5_seg0_a260cf.mp3",
+      "chunk_index": 5
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 5.94,
+      "text": "đó là con rượu mẹ",
+      "score": 0.99,
+      "evidence_clip": "room_b71af73d-7bad-4e92-a310-d7b79beb46e5_seg0_603362.mp3",
+      "chunk_index": 6
+    }
+  ],
+  "chunks_count": 6,
+  "last_updated": "2026-10-10T21:30:15.619980"
+}

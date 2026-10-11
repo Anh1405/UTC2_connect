@@ -1,0 +1,22 @@
+{
+  "call_id": "room_0aeae615-0f51-4611-8ad6-93960204098b",
+  "caller_id": "Nguyễn Lê Quốc Anh",
+  "receiver_id": "Nguyễn Trường Giang",
+  "timestamp": "2026-10-03T00:51:08.436988",
+  "full_transcript": "anh à alo con cặc cục cức hôm nay bạn ổn hôm nay bạn ổn không đừng để em đừng mẹ đủ mấy ủa xin mẹ đức mến chào chào",
+  "is_toxic": true,
+  "toxic_segments_count": 1,
+  "violations": [
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 6.96,
+      "text": "con cặc",
+      "score": 0.99,
+      "evidence_clip": "room_0aeae615-0f51-4611-8ad6-93960204098b_seg0_c1ddb7.mp3",
+      "chunk_index": 3
+    }
+  ],
+  "chunks_count": 35,
+  "last_updated": "2026-10-03T00:55:05.065263"
+}

@@ -12,7 +12,7 @@
   "dependencies": {
     "@giphy/js-fetch-api": "^5.8.0",
     "@giphy/react-components": "^10.1.2",
-    "@tailwindcss/vite": "^4.3.2",
+    "@tailwindcss/vite": "^4.3.3",
     "@tensorflow-models/toxicity": "^1.2.2",
     "@tensorflow/tfjs": "^4.22.0",
     "axios": "^1.18.1",
@@ -26,10 +26,10 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
-    "autoprefixer": "^10.5.2",
+    "autoprefixer": "^10.6.1",
     "oxlint": "^1.71.0",
-    "postcss": "^8.5.18",
-    "tailwindcss": "^4.3.2",
+    "postcss": "^8.5.29",
+    "tailwindcss": "^4.3.3",
     "vite": "^8.1.1",
     "vite-plugin-mkcert": "^2.1.0"
   }

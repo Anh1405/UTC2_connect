@@ -1,0 +1,40 @@
+{
+  "call_id": "room_ec2ee3f2-e81d-4637-b8b6-967faebdc4ed",
+  "caller_id": "Nguyễn Trường Giang",
+  "receiver_id": "Nguyễn Lê Quốc Anh",
+  "timestamp": "2026-10-10T20:55:28.059865",
+  "full_transcript": "xin chào đây xin chào hai bảy ok được luôn á đụ má hello đây ok ok đây ok phải alo vâng ái ngờ vãi lồn địt mẹ chắc là",
+  "is_toxic": true,
+  "toxic_segments_count": 3,
+  "violations": [
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 3.96,
+      "text": "đụ má",
+      "score": 0.99,
+      "evidence_clip": "room_ec2ee3f2-e81d-4637-b8b6-967faebdc4ed_seg0_b5b675.mp3",
+      "chunk_index": 9
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 4.74,
+      "text": "vãi lồn",
+      "score": 0.99,
+      "evidence_clip": "room_ec2ee3f2-e81d-4637-b8b6-967faebdc4ed_seg0_10cb23.mp3",
+      "chunk_index": 21
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 6.42,
+      "text": "địt mẹ",
+      "score": 0.99,
+      "evidence_clip": "room_ec2ee3f2-e81d-4637-b8b6-967faebdc4ed_seg0_62a4a0.mp3",
+      "chunk_index": 22
+    }
+  ],
+  "chunks_count": 23,
+  "last_updated": "2026-10-10T20:57:55.000137"
+}

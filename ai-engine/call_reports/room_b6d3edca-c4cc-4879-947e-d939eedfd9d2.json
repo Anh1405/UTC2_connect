@@ -1,0 +1,40 @@
+{
+  "call_id": "room_b6d3edca-c4cc-4879-947e-d939eedfd9d2",
+  "caller_id": "Nguyễn Lê Quốc Anh",
+  "receiver_id": "Nguyễn Trường Giang",
+  "timestamp": "2026-10-03T00:33:08.084604",
+  "full_transcript": "thằng lồn hello địt con mẹ địt con mẹ",
+  "is_toxic": true,
+  "toxic_segments_count": 3,
+  "violations": [
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 3.12,
+      "text": "thằng lồn",
+      "score": 0.99,
+      "evidence_clip": "room_b6d3edca-c4cc-4879-947e-d939eedfd9d2_seg0_bb15c0.mp3",
+      "chunk_index": 1
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 2.46,
+      "text": "địt con mẹ",
+      "score": 0.99,
+      "evidence_clip": "room_b6d3edca-c4cc-4879-947e-d939eedfd9d2_seg0_d1b6ef.mp3",
+      "chunk_index": 4
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 6.96,
+      "text": "địt con mẹ",
+      "score": 0.99,
+      "evidence_clip": "room_b6d3edca-c4cc-4879-947e-d939eedfd9d2_seg0_035a34.mp3",
+      "chunk_index": 7
+    }
+  ],
+  "chunks_count": 8,
+  "last_updated": "2026-10-03T00:33:47.519365"
+}
