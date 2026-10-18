@@ -32,6 +32,7 @@ build/
 ### VS Code ###
 .vscode/
 
+
 ### AI Engine & Large Files ###
 ai-engine/venv/
 ai-engine/models/
@@ -39,3 +40,8 @@ ai-engine/*.csv
 *.pth
 *.safetensors
 *.zip
+
+ai-engine/*.pth
+ai-engine/venv/
+*.pth
+
