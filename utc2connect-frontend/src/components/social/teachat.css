@@ -3,27 +3,54 @@
    Không phụ thuộc Tailwind nên không bị reset CSS toàn cục đè.
    Import 1 lần: import './teachat.css';
    ========================================================== */
+/* ==========================================================
+   FIX CỐ ĐỊNH MÀU HEADER TRÀ CHANH (CHỐNG MẤT MÀU PC)
+   ========================================================== */
+.tc-topbar {
+  flex-shrink: 0;
+  background: #101B33 !important; /* Màu xanh Navy đậm UTC2 */
+  border-bottom: 4px solid #FFB400 !important; /* Viền vàng Amber */
+  box-shadow: 0 4px 14px rgba(16, 27, 51, 0.25);
+  z-index: 20;
+}
 
+.tc-topbar__inner {
+  background: #101B33 !important;
+}
+
+.tc-brand__title {
+  color: #FFFFFF !important; /* Chữ tiêu đề luôn trắng rõ nét */
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.tc-brand__sub {
+  color: #FFB400 !important; /* Dòng chữ phụ màu vàng UTC2 */
+}
+
+.tc-tabs {
+  background: #1C2B4A !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+}
+
+.tc-tab {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.tc-tab--active {
+  background: #FFB400 !important;
+  color: #101B33 !important;
+}
 .tc-hub, .tc-hub * { box-sizing: border-box; }
 
 .tc-hub {
-  --tc-navy: var(--navy, #101a35);
-  --tc-navy-light: var(--navy-light, #1b2850);
-  --tc-amber: var(--amber, #fbb800);
-  --tc-bg: #eef0f5;
-  --tc-card: #ffffff;
-  --tc-line: #e4e7ee;
-  --tc-text: #1f2430;
-  --tc-muted: #6b7385;
-  --tc-radius: 18px;
-
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: calc(100vh - 56px);
+  height: 100%; /* Kế thừa 100% chiều cao của .u2-main-content.tea-mode */
   background: var(--tc-bg);
-  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: var(--tc-text);
+  overflow: hidden;
 }
 
 /* ---------- THANH HEADER ---------- */
@@ -103,8 +130,11 @@
 /* ---------- FEED ---------- */
 .tc-feed {
   position: relative;
-  width: 100%; height: 100%;
-  overflow-y: auto;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important; /* Kích hoạt cuộn mượt cho iOS Safari */
+  overscroll-behavior-y: contain;
   scrollbar-width: thin;
 }
 .tc-feed__col {
@@ -477,7 +507,9 @@
 }
 .tcc-msg--me .tcc-tools { right: 0; }
 .tcc-msg:not(.tcc-msg--me) .tcc-tools { left: 0; }
-.tcc-msg:hover .tcc-tools, .tcc-msg--active .tcc-tools { display: flex; }
+/* Chỉ hiện khi rê chuột đúng vào bong bóng tin nhắn (.tcc-line bao vừa khít bong bóng),
+   không phải cả hàng ngang. Thanh công cụ là con của .tcc-line nên di chuột lên nó vẫn giữ hover. */
+.tcc-line:hover .tcc-tools, .tcc-msg--active .tcc-tools { display: flex; }
 .tcc-tool {
   width: 30px; height: 30px; display: grid; place-items: center; border: 0; border-radius: 50%;
   background: transparent; font-size: 16px; cursor: pointer; transition: transform .12s, background .12s;
@@ -553,11 +585,6 @@
 .tcc-send:hover:not(:disabled) { background: #1d2a52; transform: translateY(-1px); }
 .tcc-send:disabled { background: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
 
-.tcc-popup {
-  position: absolute; left: 12px; bottom: calc(100% + 8px); z-index: 20; max-width: calc(100vw - 24px);
-  border-radius: 14px; overflow: hidden; box-shadow: 0 12px 34px rgba(16,27,51,.28); background: #fff;
-  animation: tcc-pop .2s cubic-bezier(.2,.8,.2,1); transform-origin: bottom left;
-}
 .tcc-mentions {
   position: absolute; left: 16px; bottom: calc(100% - 4px); z-index: 20; min-width: 220px; max-width: 80vw; padding: 6px;
   border: 1px solid #e4e7ee; border-radius: 14px; background: #fff; box-shadow: 0 10px 28px rgba(16,27,51,.22);
@@ -592,7 +619,7 @@
 .tcc-scroll::-webkit-scrollbar-thumb, .tcc-online__list::-webkit-scrollbar-thumb, .tcc-side::-webkit-scrollbar-thumb { background: rgba(16,27,51,.16); border-radius: 6px; }
 .tcc-scroll::-webkit-scrollbar-thumb:hover { background: var(--amber, #ffb400); }
 
-/* ---------- RESPONSIVE ---------- */
+/* ---------- RESPONSIVE MOBILE TỐI ƯU ---------- */
 @media (max-width: 1180px) {
   .tcc-root { grid-template-columns: 230px minmax(0, 1fr); }
   .tcc-side { display: none; }
@@ -608,7 +635,110 @@
   .tcc-send { padding: 12px 18px; }
   .tcc-jump { bottom: 160px; right: 12px; }
   .tcc-tools { top: -22px; }
+
+  /* Thanh composer cố định gọn gàng ở dưới */
+  .tcc-composer {
+    position: relative !important;
+    z-index: 10 !important;
+    padding: 8px 10px 10px !important;
+    background: #ffffff !important;
+    border-top: 1px solid #e4e7ee !important;
+  }
+
+  .tcc-toolbar {
+    margin-bottom: 6px !important;
+    gap: 4px !important;
+  }
+  .tcc-pill {
+    padding: 5px 10px !important;
+    font-size: 12px !important;
+  }
+
+  /* 1. GỢI Ý GIF TỰ ĐỘNG (Auto GIF) – giữ dạng thanh nổi gọn */
+  .tcc-suggest {
+    position: absolute !important;
+    left: 8px !important;
+    right: 8px !important;
+    bottom: calc(100% + 6px) !important;
+    top: auto !important;
+    width: auto !important;
+    height: auto !important;
+    max-height: 120px !important;
+    padding: 8px 10px !important;
+    border-radius: 14px !important;
+    border: 1px solid #e4e7ee !important;
+    background: rgba(255, 255, 255, 0.97) !important;
+    backdrop-filter: blur(10px) !important;
+    box-shadow: 0 6px 18px rgba(16, 27, 51, 0.14) !important;
+    z-index: 25 !important;
+    margin: 0 !important;
+  }
+
+  /* --- A. TỐI ƯU MENU TRÒ CHƠI (COMPACT GAME MENU) --- */
+  .tcc-games {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: min(42vh, 260px) !important;
+    padding: 10px 12px !important;
+    box-sizing: border-box !important;
+    overflow-y: auto !important;
+  }
+  .tcc-games__head {
+    font-size: 13.5px !important;
+    margin-bottom: 2px !important;
+  }
+  .tcc-games__note {
+    font-size: 11px !important;
+    margin-bottom: 6px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  .tcc-games__list {
+    gap: 6px !important;
+  }
+  .tcc-game-card {
+    padding: 8px 10px !important;
+    border-radius: 10px !important;
+  }
+  .tcc-game-card__icon {
+    font-size: 20px !important;
+  }
+  .tcc-game-card b {
+    font-size: 13px !important;
+  }
+  .tcc-game-card small {
+    font-size: 10.5px !important;
+  }
+
+  /* --- B. TỐI ƯU BỘ CHỌN GIF (COMPACT GIF PICKER) --- */
+  .tcc-gifp {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: min(42vh, 250px) !important;
+    padding: 8px 10px !important;
+    box-sizing: border-box !important;
+  }
+  .tcc-gifp__search {
+    padding: 6px 12px !important;
+    font-size: 13px !important;
+  }
+  .tcc-gifp__chips {
+    margin: 4px 0 !important;
+  }
+  .tcc-gifp__chip {
+    padding: 3px 8px !important;
+    font-size: 11px !important;
+  }
+  .tcc-gifp__grid {
+    max-height: calc(min(42vh, 250px) - 90px) !important;
+  }
+  .tcc-gifp__foot {
+    display: none !important; /* Ẩn dòng POWERED BY GIPHY trên mobile */
+  }
 }
+
 @media (prefers-reduced-motion: reduce) {
   .tcc-dot, .tcc-sticker, .tcc-game, .tcc-popup, .tcc-jump, .tcc-notice { animation: none; }
 }
@@ -691,6 +821,346 @@
 .tcc-widget__cd { margin-bottom: 10px !important; font-weight: 700; color: #4b5365 !important; }
 
 @media (max-width: 860px) {
+  /* Auto-GIF giữ kiểu thanh nổi, không bottom-sheet */
   .tcc-suggest { left: 8px; right: 8px; }
-  .tcc-suggest__item { height: 84px; }
+  .tcc-suggest__item { height: 76px; }
+}
+@media screen and (max-width: 900px) {
+  .tc-feed__col {
+    padding-bottom: 140px !important; /* Chừa đủ chỗ cho bài viết cuối không bị Bottom Nav che */
+  }
+
+  .tcc-scroll {
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: contain;
+  }
+}
+/* ==========================================================
+   FIX NỀN THẺ BÀI VIẾT (TC-CARD) VÀ KHUNG BÌNH LUẬN
+   ========================================================== */
+
+/* 1. Cố định nền trắng cho tất cả thẻ bài viết & khung đăng bài */
+.tc-card,
+.tc-composer {
+  background: #FFFFFF !important;
+  border: 1px solid #E4E7EE !important;
+  border-radius: 16px !important;
+  box-shadow: 0 2px 12px rgba(16, 27, 51, 0.06) !important;
+}
+
+/* 2. Cố định ô soạn thảo văn bản */
+.tc-textarea {
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #101B33 !important;
+}
+
+.tc-textarea:focus {
+  background: #FFFFFF !important;
+  border-color: #3B82F6 !important;
+}
+
+/* 3. Khung bình luận bên dưới bài viết */
+.tc-comments {
+  background: #F8FAFC !important;
+  border-top: 1px solid #E4E7EE !important;
+}
+
+/* 4. Khung hình bong bóng tin nhắn bình luận */
+.tc-bubble {
+  background: #FFFFFF !important;
+  border: 1px solid #E4E7EE !important;
+  color: #101B33 !important;
+}
+
+/* 5. Nút bấm chọn bộ lọc bài viết (Mới nhất / Nổi bật) */
+.tc-react--on {
+  background: #EAF2FF !important;
+  color: #1D4ED8 !important;
+}
+/* ==========================================================
+   TỐI ƯU THU GỌN HEADER (TĂNG DIỆN TÍCH KHUNG CHAT)
+   ========================================================== */
+.tc-topbar__inner {
+  padding: 6px 16px !important;
+  gap: 8px !important;
+}
+
+.tc-brand__logo {
+  width: 32px !important;
+  height: 32px !important;
+  font-size: 16px !important;
+  border-radius: 8px !important;
+}
+
+.tc-brand__title {
+  font-size: 18px !important;
+}
+
+.tc-brand__sub {
+  display: none !important;
+}
+
+.tc-tabs {
+  padding: 3px !important;
+  border-radius: 10px !important;
+}
+
+.tc-tab {
+  padding: 6px 14px !important;
+  font-size: 13px !important;
+}
+
+/* ==========================================================
+   FIX LỖI HIỂN THỊ TRÙNG 2 HÀNG BIỂU TƯỢNG TRONG EMOJI PICKER
+   ========================================================== */
+
+/* 1. Khung chứa composer đẩy popup xuống dưới */
+.tcc-composer {
+  display: flex !important;
+  flex-direction: column !important;
+  position: relative !important;
+  padding: 10px 16px 14px !important;
+  background: #ffffff !important;
+  border-top: 1px solid #e4e7ee !important;
+}
+
+.tcc-toolbar { order: 1 !important; }
+.tcc-row     { order: 2 !important; }
+
+/* 2. Định dạng Popup dạng khối gọn gàng */
+.tcc-popup {
+  order: 3 !important;
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 320px !important;
+  margin-top: 10px !important;
+  margin-bottom: 0 !important;
+  background: #FFFDF6 !important;
+  border: 1px solid #E1E0D6 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 16px rgba(16, 27, 51, 0.08) !important;
+  overflow: hidden !important;
+  z-index: 10 !important;
+}
+
+/* 3. Tùy chỉnh màu sắc qua CSS Variables (Giữ nguyên cấu trúc hiển thị biểu tượng của thư viện) */
+.tcc-popup .EmojiPickerReact.EmojiPickerReact,
+.tcc-popup aside.emoji-picker-react {
+  --epr-bg-color: #FFFDF6 !important;
+  --epr-category-label-bg-color: #FFFDF6 !important;
+  --epr-text-color: #101B33 !important;
+  --epr-hover-bg-color: rgba(255, 180, 0, 0.14) !important;
+  --epr-focus-bg-color: rgba(255, 180, 0, 0.14) !important;
+  --epr-highlight-color: #FFB400 !important;
+  --epr-search-input-bg-color: #FBFAF4 !important;
+  --epr-search-input-bg-color-active: #FFFDF6 !important;
+  --epr-search-border-color: #FFB400 !important;
+  --epr-search-input-text-color: #101B33 !important;
+  --epr-search-input-placeholder-color: #B7B4A6 !important;
+  --epr-category-icon-active-color: #DB9A00 !important;
+  --epr-picker-border-color: transparent !important;
+  --epr-skin-tone-picker-menu-color: #FFFDF6 !important;
+  --epr-emoji-variation-picker-bg-color: #FFFDF6 !important;
+  --epr-emoji-variation-picker-text-color: #101B33 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+
+/* 4. Định dạng ô tìm kiếm */
+.tcc-popup .EmojiPickerReact input.epr-search {
+  border-radius: 20px !important;
+  border: 1.5px solid #E1E0D6 !important;
+  font-size: 14px !important;
+  height: 38px !important;
+  padding: 0 14px !important;
+}
+
+.tcc-popup .EmojiPickerReact input.epr-search:focus {
+  border-color: #FFB400 !important;
+  box-shadow: 0 0 0 3px rgba(255, 180, 0, 0.18) !important;
+  background: #FFFDF6 !important;
+}
+
+/* 5. Hiệu ứng tô nền cho danh mục được chọn */
+.tcc-popup .EmojiPickerReact .epr-cat-btn[aria-selected="true"] {
+  background-color: rgba(255, 180, 0, 0.16) !important;
+  border-radius: 8px !important;
+}
+
+/* ==========================================================
+   FIX LỖI TRÙNG 2 HÀNG BIỂU TƯỢNG DANH MỤC TRONG EMOJI PICKER
+   ========================================================== */
+
+/* 1. Đặt header về vị trí tương đối để tránh cơ chế dính (sticky) sinh ra bản sao */
+.tcc-popup .EmojiPickerReact .epr-header-overlay {
+  display: block !important;
+  position: relative !important;
+  top: 0 !important;
+  box-shadow: none !important;
+}
+
+/* 2. Ép thanh icon danh mục chính chỉ hiển thị 1 hàng duy nhất */
+.tcc-popup .EmojiPickerReact .epr-category-nav {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  max-height: 42px !important;
+}
+
+/* 3. Ẩn triệt để thanh icon danh mục bị lặp/clone bên trong phần body */
+.tcc-popup .EmojiPickerReact .epr-body .epr-category-nav,
+.tcc-popup .EmojiPickerReact .epr-category-nav ~ .epr-category-nav {
+  display: none !important;
+}
+
+/* 4. Chỉ ẩn phần xem trước (preview) và chọn màu da (skin tones) dư thừa */
+.tcc-popup .EmojiPickerReact .epr-preview,
+.tcc-popup .EmojiPickerReact .epr-skin-tones {
+  display: none !important;
+}
+/* ==========================================================
+   SIÊU THU GỌN BỘ NÚT CONFESSION & CHAT ALL TRÊN MOBILE
+   ========================================================== */
+@media screen and (max-width: 860px) {
+  /* 1. Cố định thanh Topbar mỏng nhẹ trên 1 hàng ngang */
+  .tc-topbar {
+    position: relative !important;
+    z-index: 25 !important;
+    background: #101B33 !important;
+    border-bottom: 2px solid #FFB400 !important;
+  }
+
+  .tc-topbar__inner {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important; /* Không cho nhảy dòng */
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 4px 10px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 2. Tiêu đề thương hiệu bên trái */
+  .tc-brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    min-width: 0 !important;
+    flex-shrink: 1 !important;
+  }
+
+  .tc-brand__title {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 110px !important;
+  }
+
+  /* 3. Thu nhỏ bộ nút Confession / Chat All thành viên thuốc (Pill) mini */
+  .tc-tabs {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 2px !important;
+    gap: 2px !important;
+    border-radius: 20px !important; /* Bo tròn viền công tắc */
+    background: #1C2B4A !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: none !important;
+    flex-shrink: 0 !important;
+  }
+
+  .tc-tab {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 3px 8px !important; /* Giảm padding tối đa */
+    height: 26px !important;
+    min-height: 26px !important;
+    font-size: 11px !important; /* Cỡ chữ vừa đủ đọc */
+    font-weight: 700 !important;
+    border-radius: 16px !important;
+    gap: 3px !important;
+    white-space: nowrap !important;
+    transition: all 0.15s ease !important;
+  }
+
+  .tc-tab__icon {
+    font-size: 11px !important;
+    line-height: 1 !important;
+  }
+
+  /* Màu tab đang được chọn */
+  .tc-tab--active {
+    background: #FFB400 !important;
+    color: #101B33 !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2) !important;
+  }
+}
+/* ==========================================================
+   PC (>= 861px): Emoji / GIF / Trò chơi hiện dạng popover NỔI
+   ngay phía trên thanh chat – không đẩy khung tin nhắn lên.
+   Mobile (<= 860px) giữ nguyên dạng khối bên dưới.
+   ĐẶT Ở CUỐI FILE để thắng khối ".tcc-popup" phía trên.
+   ========================================================== */
+@media screen and (min-width: 861px) {
+  .tcc-popup {
+    position: absolute !important;
+    left: 16px !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: calc(100% + 8px) !important;
+    width: 360px !important;
+    max-width: calc(100% - 32px) !important;
+    height: auto !important;
+    max-height: 70vh !important;
+    margin: 0 !important;
+    z-index: 30 !important;
+    background: #ffffff !important;
+    border: 1px solid #e4e7ee !important;
+    border-radius: 16px !important;
+    box-shadow: 0 12px 32px rgba(16, 27, 51, 0.22) !important;
+    overflow: hidden !important;
+    transform-origin: bottom left;
+    animation: tcc-pop .18s cubic-bezier(.2,.8,.2,1);
+  }
+
+  /* Emoji picker cần chiều cao cố định vì popup đang height:auto */
+  .tcc-popup .EmojiPickerReact.EmojiPickerReact,
+  .tcc-popup aside.emoji-picker-react {
+    width: 100% !important;
+    height: 380px !important;
+  }
+
+  /* GIF + Trò chơi lấp đầy popup (thay vì 340px lệch bên trái) */
+  .tcc-popup .tcc-gifp,
+  .tcc-popup .tcc-games {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .tcc-popup .tcc-games {
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+}
+
+/* ---------- GIF gợi ý: huy hiệu "GIF bạn hay dùng" ---------- */
+.tcc-suggest__item { position: relative; }
+.tcc-suggest__item--fav::after {
+  content: '⭐'; position: absolute; top: 3px; right: 3px; font-size: 11px; line-height: 1;
+  padding: 2px 3px; border-radius: 999px; background: rgba(16, 26, 53, .72);
 }

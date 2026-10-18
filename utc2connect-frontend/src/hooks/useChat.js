@@ -8,12 +8,16 @@ import { generateUUID } from '../utils/deviceId';
 import { containsBadContent } from '../utils/chatFilter';
 import { mapVietnameseToGiphy } from '../utils/gifKeywords';
 
-// Chat văn bản / emoji / GIF trong cuộc gọi
+// Hook xử lý Chat văn bản / Emoji / GIF / Trò chơi trong cuộc gọi hoặc phòng chat
 export default function useChat() {
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
+
+  // Trạng thái bật/tắt các Menu phụ (Emoji, GIF, Trò chơi)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showGifPicker, setShowGifPicker] = useState(false);
+  const [showGamePicker, setShowGamePicker] = useState(false);
+
   const [gifSearchTerm, setGifSearchTerm] = useState('');
   const [hideAutoGif, setHideAutoGif] = useState(false);
   const debouncedChatInput = useDebounce(chatInput, 600);
@@ -26,6 +30,38 @@ export default function useChat() {
 
   const startConversation = useCallback(() => {
     setChatMessages([{ sender: 'system', text: 'Hệ thống: Đã kết nối với một bạn học ẩn danh!' }]);
+  }, []);
+
+  // Bật/tắt Picker độc lập (Mở cái này thì tự động đóng 2 cái kia)
+  // Đồng thời ẩn gợi ý GIF tự động để tránh chồng chéo với bottom-sheet trên mobile
+  const toggleEmojiPicker = useCallback(() => {
+    setShowEmojiPicker((prev) => {
+      const next = !prev;
+      if (next) setHideAutoGif(true); // ẩn auto-GIF khi mở picker
+      return next;
+    });
+    setShowGifPicker(false);
+    setShowGamePicker(false);
+  }, []);
+
+  const toggleGifPicker = useCallback(() => {
+    setShowGifPicker((prev) => {
+      const next = !prev;
+      if (next) setHideAutoGif(true);
+      return next;
+    });
+    setShowEmojiPicker(false);
+    setShowGamePicker(false);
+  }, []);
+
+  const toggleGamePicker = useCallback(() => {
+    setShowGamePicker((prev) => {
+      const next = !prev;
+      if (next) setHideAutoGif(true);
+      return next;
+    });
+    setShowEmojiPicker(false);
+    setShowGifPicker(false);
   }, []);
 
   // Lắng nghe tin nhắn từ server
@@ -70,14 +106,14 @@ export default function useChat() {
   }, [chatInput]);
 
   const fetchAutoGifs = useCallback(
-    (offset) => {
-      if (!debouncedChatInput || debouncedChatInput.trim().length < 2) {
-        return Promise.resolve({ data: [] });
-      }
-      const smartQuery = mapVietnameseToGiphy(debouncedChatInput);
-      return searchGifs(smartQuery, { offset, limit: 10 });
-    },
-    [debouncedChatInput]
+      (offset) => {
+        if (!debouncedChatInput || debouncedChatInput.trim().length < 2) {
+          return Promise.resolve({ data: [] });
+        }
+        const smartQuery = mapVietnameseToGiphy(debouncedChatInput);
+        return searchGifs(smartQuery, { offset, limit: 10 });
+      },
+      [debouncedChatInput]
   );
 
   const handleSendMessage = (roomID) => {
@@ -121,11 +157,20 @@ export default function useChat() {
     debouncedChatInput,
     hideAutoGif,
     setHideAutoGif,
+
+    // State & Toggle điều khiển menu
     showEmojiPicker,
     setShowEmojiPicker,
     showGifPicker,
     setShowGifPicker,
+    showGamePicker,
+    setShowGamePicker,
+    toggleEmojiPicker,
+    toggleGifPicker,
+    toggleGamePicker,
+
     gifSearchTerm,
+    setGifSearchTerm,
     fetchAutoGifs,
     addSystemMessage,
     startConversation,

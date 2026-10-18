@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import './App.css';
-
+import useVisualViewport from './hooks/useVisualViewport';
 import socket from './services/socket';
 
 // Hooks
@@ -17,6 +17,7 @@ import AuthScreen from './components/auth/AuthScreen';
 import DeviceOtpModal from './components/auth/DeviceOtpModal';
 import Navbar from './components/layout/Navbar';
 import Sidebar from './components/layout/Sidebar';
+import MobileBottomNav from './components/layout/MobileBottomNav';
 import CallSection from './components/call/CallSection';
 import ReportModal from './components/call/ReportModal';
 import UserProfileDrawer from './components/profile/UserProfileDrawer';
@@ -1163,7 +1164,7 @@ const handleFilterChange = (type) => {
   return (
 Update-new-code-07
     <div
-      className="u2-page"
+      className={`u2-page ${auth.loginSuccess ? 'logged-in' : ''}`}
       style={{ fontFamily: "'Be Vietnam Pro', 'Inter', system-ui, -apple-system, sans-serif" }}
 
   <div className="u2-page">
@@ -1600,7 +1601,7 @@ Update-new-code-04
           )}
 
           {activeSection === 'market' && (
-            <div className="u2-main-content" style={{ marginLeft: 280 }}>
+            <div className="u2-main-content">
               <MarketModule
                 userData={auth.userData}
                 marketItems={campus.marketItems}
@@ -1612,7 +1613,7 @@ Update-new-code-04
           )}
 
           {activeSection === 'housing' && (
-            <div className="u2-main-content" style={{ marginLeft: 280 }}>
+            <div className="u2-main-content">
               <HousingModule
                 userData={auth.userData}
                 housingItems={campus.housingItems}
@@ -1624,10 +1625,7 @@ Update-new-code-04
           )}
 
           {activeSection === 'social' && (
-            <div
-              className="u2-main-content tea-mode"
-              style={{ padding: 0, display: 'block', marginRight: 0, width: 'auto' }}
-            >
+            <div className="u2-main-content tea-mode">
               <TeaChatHub socket={socket} currentUser={auth.userData?.username} onOpenProfile={handleOpenProfile} />
             </div>
           )}
@@ -1639,6 +1637,8 @@ Update-new-code-04
               onClose={() => setProfileUsername(null)}
             />
           )}
+
+          <MobileBottomNav activeSection={activeSection} onSelect={setActiveSection} />
         </div>
       ) : (
         <AuthScreen auth={auth} />

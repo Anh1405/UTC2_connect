@@ -4,7 +4,7 @@ import { rtcConfig } from '../config/rtcConfig';
 import useLatest from './useLatest';
 import useVoiceModeration from './useVoiceModeration';
 import useVoiceViolations from './useVoiceViolations';
-
+import { MAX_VOICE_VIOLATIONS } from '../config/appConfig';
 // Ghép cặp ngẫu nhiên + WebRTC + kiểm duyệt giọng nói.
 //  - localStream / ensureMicTrack: lấy từ useLocalCamera
 //  - chat: { addSystemMessage, startConversation } lấy từ useChat
@@ -31,13 +31,32 @@ export default function useRandomCall({
   const autoSearchTimeoutRef = useRef(null);
 
   // ----- Kiểm duyệt giọng nói -----
-  const { violationCount, toxicWarning, registerViolation, resetViolations } = useVoiceViolations({
+  const { violationCount, toxicWarning, registerViolation, resetViolations, notifySelfViolation } =
+  useVoiceViolations({
     addSystemMessage: chat.addSystemMessage,
     onLimitReached: () => handleEndCall(),
   });
   const { startVoiceModeration, stopVoiceModeration } = useVoiceModeration({
-    onToxic: (data, speakerName) => registerViolation(speakerName),
-  });
+  onToxic: (data, speakerName) => {
+  const count = registerViolation(speakerName);
+  if (count && currentRoomID.current) {
+    socket.emit('voice_violation', { roomID: currentRoomID.current, count, max: MAX_VOICE_VIOLATIONS });
+  }
+},
+  // 🌟 BỔ SUNG CALLBACK ONTRANSCRIPT TẠI ĐÂY:
+  onTranscript: (transcriptText, speakerName, data) => {
+    if (chat && (chat.addMessage || chat.sendMessage)) {
+      // Gọi hàm thêm tin nhắn của useChat
+      (chat.addMessage || chat.sendMessage)({
+        id: Date.now(),
+        text: transcriptText,
+        sender: speakerName || 'Đối phương',
+        isToxic: data?.is_toxic || false,
+        isVoice: true,
+      });
+    }
+  },
+});
 
   // Hàm tiện cho việc kiểm thử banner: gõ window.__testToxicBanner() trong console
   useEffect(() => {
@@ -56,7 +75,12 @@ export default function useRandomCall({
     const interval = setInterval(() => setSearchElapsed((prev) => prev + 1), 1000);
     return () => clearInterval(interval);
   }, [isSearching]);
-
+  // 🌟 Đảm bảo thẻ video đối phương luôn nhận stream kể cả khi React render chậm hơn WebRTC
+useEffect(() => {
+  if (isConnected && remoteVideoRef.current && remoteStreamRef.current) {
+    remoteVideoRef.current.srcObject = remoteStreamRef.current;
+  }
+}, [isConnected]);
   // ----- Dọn dẹp / điều khiển cuộc gọi -----
   const resetCurrentCall = useCallback(() => {
     stopVoiceModeration();
@@ -112,6 +136,7 @@ export default function useRandomCall({
     userData,
     chat,
     onSessionExpired,
+    notifySelfViolation,
     resetCurrentCall,
     handleStartSearching,
     startVoiceModeration,
@@ -162,16 +187,23 @@ export default function useRandomCall({
       latest.current.resetViolations();
 
       const pc = new RTCPeerConnection(rtcConfig);
+      pc.oniceconnectionstatechange = () => console.log('🧊 ICE:', pc.iceConnectionState);
+      pc.onconnectionstatechange = () => console.log('🔗 PC:', pc.connectionState);
       peerConnection.current = pc;
 
       pc.ontrack = (event) => {
-        console.log('👉 [WebRTC] Xong! Đã nhận được video từ đối phương.');
-        if (remoteVideoRef.current) remoteVideoRef.current.srcObject = event.streams[0];
-        remoteStreamRef.current = event.streams[0];
-        if (event.track.kind === 'audio') {
-          latest.current.startVoiceModeration(event.streams[0], data.roomID, data.opponentUsername, me?.username);
-        }
-      };
+  console.log('👉 [WebRTC] Xong! Đã nhận được video/audio từ đối phương.');
+  const stream = event.streams[0];
+  remoteStreamRef.current = stream;
+
+  if (remoteVideoRef.current) {
+    remoteVideoRef.current.srcObject = stream;
+  }
+
+  if (event.track.kind === 'audio') {
+    latest.current.startVoiceModeration(stream, data.roomID, data.opponentUsername, me?.username);
+  }
+};
 
       pc.onicecandidate = (event) => {
         if (event.candidate) {
@@ -244,7 +276,9 @@ export default function useRandomCall({
       latest.current.chat.addSystemMessage('Hệ thống: Hành khách kia đã rời đi. Đang tìm chuyến mới...');
       autoSearchTimeoutRef.current = setTimeout(() => latest.current.handleStartSearching(), 400);
     };
-
+    // trong useEffect socket, cạnh các socket.on khác:
+    const handleVoiceViolation = (d) => latest.current.notifySelfViolation(d?.count ?? 1, d?.max);
+    socket.on('voice_violation', handleVoiceViolation);
     socket.on('connect_error', handleConnectError);
     socket.on('matched', handleMatched);
     socket.on('receive_offer', handleOffer);
@@ -260,6 +294,7 @@ export default function useRandomCall({
       socket.off('receive_answer', handleAnswer);
       socket.off('receive_ice_candidate', handleIceCandidate);
       socket.off('peer_disconnected', handlePeerDisconnected);
+      socket.off('voice_violation', handleVoiceViolation);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loginSuccess]);
