@@ -1,0 +1,12 @@
+{
+  "call_id": "room_f0322d89-fdc0-4130-b0fd-b224886b0299",
+  "caller_id": "Nguyễn Lê Quốc Anh",
+  "receiver_id": "Nguyễn Trường Giang",
+  "timestamp": "2026-10-18T01:24:18.948783",
+  "full_transcript": "đây là một phần được a lô sản ok ô kê ạ để mà anh em dạ được",
+  "is_toxic": false,
+  "toxic_segments_count": 0,
+  "violations": [],
+  "chunks_count": 18,
+  "last_updated": "2026-10-18T01:25:19.245673"
+}

@@ -1,0 +1,22 @@
+{
+  "call_id": "string",
+  "caller_id": "Unknown",
+  "receiver_id": "Unknown",
+  "timestamp": "2026-10-14T09:21:14.507107",
+  "full_transcript": "hả lồn đụ mẹ",
+  "is_toxic": true,
+  "toxic_segments_count": 1,
+  "violations": [
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 1.894,
+      "text": "hả lồn đụ mẹ",
+      "score": 0.99,
+      "evidence_clip": "string_seg0_805eb3.mp3",
+      "chunk_index": 2
+    }
+  ],
+  "chunks_count": 2,
+  "last_updated": "2026-10-14T09:45:12.937317"
+}

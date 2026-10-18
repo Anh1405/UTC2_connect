@@ -1,0 +1,40 @@
+{
+  "call_id": "room_0afb5e7b-9118-48a1-9721-958b825a5ee4",
+  "caller_id": "Nguyễn Lê Quốc Anh",
+  "receiver_id": "Nguyễn Trường Giang",
+  "timestamp": "2026-10-18T01:13:19.333577",
+  "full_transcript": "em được a lô rồi a lô ok không phải địt mẹ đụ mẹ a lồn",
+  "is_toxic": true,
+  "toxic_segments_count": 3,
+  "violations": [
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 6.36,
+      "text": "địt mẹ",
+      "score": 0.99,
+      "evidence_clip": "room_0afb5e7b-9118-48a1-9721-958b825a5ee4_seg0_1b50e1.mp3",
+      "chunk_index": 19
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 2.4,
+      "text": "đụ mẹ",
+      "score": 0.99,
+      "evidence_clip": "room_0afb5e7b-9118-48a1-9721-958b825a5ee4_seg0_804a70.mp3",
+      "chunk_index": 23
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 5.04,
+      "text": "a lồn",
+      "score": 0.99,
+      "evidence_clip": "room_0afb5e7b-9118-48a1-9721-958b825a5ee4_seg0_6b6698.mp3",
+      "chunk_index": 25
+    }
+  ],
+  "chunks_count": 26,
+  "last_updated": "2026-10-18T01:14:51.791860"
+}

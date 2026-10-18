@@ -1,0 +1,31 @@
+{
+  "call_id": "room_20197562-6cca-408d-8e7e-acabb67d4056",
+  "caller_id": "Nguyễn Trường Giang",
+  "receiver_id": "Nguyễn Lê Quốc Anh",
+  "timestamp": "2026-10-14T19:20:14.287126",
+  "full_transcript": "alo alo alo a lô a lô xin chào alo con cặc địt mẹ",
+  "is_toxic": true,
+  "toxic_segments_count": 2,
+  "violations": [
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 2.88,
+      "text": "con cặc",
+      "score": 0.99,
+      "evidence_clip": "room_20197562-6cca-408d-8e7e-acabb67d4056_seg0_aa431e.mp3",
+      "chunk_index": 9
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 3.24,
+      "text": "địt mẹ",
+      "score": 0.99,
+      "evidence_clip": "room_20197562-6cca-408d-8e7e-acabb67d4056_seg0_8cd474.mp3",
+      "chunk_index": 10
+    }
+  ],
+  "chunks_count": 11,
+  "last_updated": "2026-10-14T19:20:50.971891"
+}

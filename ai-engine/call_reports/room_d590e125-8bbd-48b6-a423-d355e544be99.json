@@ -1,0 +1,12 @@
+{
+  "call_id": "room_d590e125-8bbd-48b6-a423-d355e544be99",
+  "caller_id": "Nguyễn Lê Quốc Anh",
+  "receiver_id": "Nguyễn Trường Giang",
+  "timestamp": "2026-10-14T19:37:04.839908",
+  "full_transcript": "",
+  "is_toxic": false,
+  "toxic_segments_count": 0,
+  "violations": [],
+  "chunks_count": 1,
+  "last_updated": "2026-10-14T19:37:04.839908"
+}

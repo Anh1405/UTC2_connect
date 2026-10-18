@@ -1,0 +1,22 @@
+{
+  "call_id": "room_52685f19-1be1-477f-b559-2ed682234819",
+  "caller_id": "Nguyễn Trường Giang",
+  "receiver_id": "Nguyễn Lê Quốc Anh",
+  "timestamp": "2026-10-14T18:41:24.793319",
+  "full_transcript": "đúng không a lô con cặc ok",
+  "is_toxic": true,
+  "toxic_segments_count": 1,
+  "violations": [
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 3.36,
+      "text": "con cặc",
+      "score": 0.99,
+      "evidence_clip": "room_52685f19-1be1-477f-b559-2ed682234819_seg0_cb0c14.mp3",
+      "chunk_index": 3
+    }
+  ],
+  "chunks_count": 5,
+  "last_updated": "2026-10-14T18:44:45.703449"
+}

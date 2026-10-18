@@ -1,0 +1,31 @@
+{
+  "call_id": "room_0551ea3d-cb32-4080-ab6b-eab7504a0f34",
+  "caller_id": "Nguyễn Trường Giang",
+  "receiver_id": "Nguyễn Lê Quốc Anh",
+  "timestamp": "2026-10-14T18:47:00.227127",
+  "full_transcript": "thằng lồn hello à vâng xin chiều xin tiền địt mẹ hello xin chào",
+  "is_toxic": true,
+  "toxic_segments_count": 2,
+  "violations": [
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 6.96,
+      "text": "thằng lồn",
+      "score": 0.99,
+      "evidence_clip": "room_0551ea3d-cb32-4080-ab6b-eab7504a0f34_seg0_7bbf1f.mp3",
+      "chunk_index": 2
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 6.06,
+      "text": "địt mẹ",
+      "score": 0.99,
+      "evidence_clip": "room_0551ea3d-cb32-4080-ab6b-eab7504a0f34_seg0_c5e17c.mp3",
+      "chunk_index": 8
+    }
+  ],
+  "chunks_count": 11,
+  "last_updated": "2026-10-14T18:50:17.918934"
+}

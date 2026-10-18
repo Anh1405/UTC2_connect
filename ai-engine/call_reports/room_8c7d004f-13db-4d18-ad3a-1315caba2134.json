@@ -1,0 +1,40 @@
+{
+  "call_id": "room_8c7d004f-13db-4d18-ad3a-1315caba2134",
+  "caller_id": "Nguyễn Lê Quốc Anh",
+  "receiver_id": "Nguyễn Trường Giang",
+  "timestamp": "2026-10-18T01:43:25.606424",
+  "full_transcript": "lục lục mình con kẹt ok ok ok địt mẹ vãi lồn tiếp tục này được ngày hôm nay ok về bề đồ mẹ em ơi đích cụ",
+  "is_toxic": true,
+  "toxic_segments_count": 3,
+  "violations": [
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 3.72,
+      "text": "địt mẹ",
+      "score": 0.99,
+      "evidence_clip": "room_8c7d004f-13db-4d18-ad3a-1315caba2134_seg0_fe6ebd.mp3",
+      "chunk_index": 12
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 4.8,
+      "text": "vãi lồn",
+      "score": 0.99,
+      "evidence_clip": "room_8c7d004f-13db-4d18-ad3a-1315caba2134_seg0_0ea985.mp3",
+      "chunk_index": 14
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 6.36,
+      "text": "đích cụ",
+      "score": 0.99,
+      "evidence_clip": "room_8c7d004f-13db-4d18-ad3a-1315caba2134_seg0_807c1e.mp3",
+      "chunk_index": 28
+    }
+  ],
+  "chunks_count": 30,
+  "last_updated": "2026-10-18T01:44:40.573602"
+}
