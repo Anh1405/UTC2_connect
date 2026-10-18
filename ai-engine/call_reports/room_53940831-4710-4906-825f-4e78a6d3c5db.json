@@ -1,0 +1,49 @@
+{
+  "call_id": "room_53940831-4710-4906-825f-4e78a6d3c5db",
+  "caller_id": "Nguyễn Lê Quốc Anh",
+  "receiver_id": "Nguyễn Trường Giang",
+  "timestamp": "2026-10-03T00:58:55.118308",
+  "full_transcript": "anh ơi anh ơi alo công việc địt mẹ địt con mẹ chào con nhỉ địt con mẹ địt con mẹ mày",
+  "is_toxic": true,
+  "toxic_segments_count": 4,
+  "violations": [
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 6.96,
+      "text": "địt mẹ",
+      "score": 0.99,
+      "evidence_clip": "room_53940831-4710-4906-825f-4e78a6d3c5db_seg0_31ebef.mp3",
+      "chunk_index": 24
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 3.0,
+      "text": "địt con mẹ",
+      "score": 0.99,
+      "evidence_clip": "room_53940831-4710-4906-825f-4e78a6d3c5db_seg0_998631.mp3",
+      "chunk_index": 25
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 6.96,
+      "text": "địt con mẹ",
+      "score": 0.99,
+      "evidence_clip": "room_53940831-4710-4906-825f-4e78a6d3c5db_seg0_ed0c24.mp3",
+      "chunk_index": 37
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 2.52,
+      "text": "địt con mẹ mày",
+      "score": 0.99,
+      "evidence_clip": "room_53940831-4710-4906-825f-4e78a6d3c5db_seg0_b541f5.mp3",
+      "chunk_index": 38
+    }
+  ],
+  "chunks_count": 38,
+  "last_updated": "2026-10-03T01:03:44.683138"
+}

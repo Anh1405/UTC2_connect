@@ -1,0 +1,31 @@
+{
+  "call_id": "room_5c00f1fb-7476-4794-9651-d9828dd2c9db",
+  "caller_id": "Nguyễn Trường Giang",
+  "receiver_id": "Nguyễn Lê Quốc Anh",
+  "timestamp": "2026-10-14T19:27:37.385600",
+  "full_transcript": "a lô a lô con cặc ok ok bản lô cho mình a lô đúng không em dạ vâng tự mẹ đây định sản được rồi được để địt mẹ đấy",
+  "is_toxic": true,
+  "toxic_segments_count": 2,
+  "violations": [
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 4.26,
+      "text": "con cặc",
+      "score": 0.99,
+      "evidence_clip": "room_5c00f1fb-7476-4794-9651-d9828dd2c9db_seg0_87e9c4.mp3",
+      "chunk_index": 4
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 5.46,
+      "text": "địt mẹ",
+      "score": 0.99,
+      "evidence_clip": "room_5c00f1fb-7476-4794-9651-d9828dd2c9db_seg0_8731cd.mp3",
+      "chunk_index": 21
+    }
+  ],
+  "chunks_count": 24,
+  "last_updated": "2026-10-14T19:28:52.373610"
+}

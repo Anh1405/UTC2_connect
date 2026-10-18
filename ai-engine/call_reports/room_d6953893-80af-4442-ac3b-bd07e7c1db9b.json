@@ -1,0 +1,76 @@
+{
+  "call_id": "room_d6953893-80af-4442-ac3b-bd07e7c1db9b",
+  "caller_id": "Nguyễn Trường Giang",
+  "receiver_id": "Nguyễn Lê Quốc Anh",
+  "timestamp": "2026-10-14T18:24:15.958176",
+  "full_transcript": "địt mẹ mày a lô a lô alo địt mẹ địt mẹ vãi lồn ok hai ba ok con cảm ơn con cặc ok ok con cặc a lô con dạ con ok ok không cần hello ok",
+  "is_toxic": true,
+  "toxic_segments_count": 7,
+  "violations": [
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 3.42,
+      "text": "địt mẹ mày",
+      "score": 0.99,
+      "evidence_clip": "room_d6953893-80af-4442-ac3b-bd07e7c1db9b_seg0_ed5157.mp3",
+      "chunk_index": 1
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 4.14,
+      "text": "địt mẹ",
+      "score": 0.99,
+      "evidence_clip": "room_d6953893-80af-4442-ac3b-bd07e7c1db9b_seg0_5e957b.mp3",
+      "chunk_index": 6
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 6.96,
+      "text": "địt mẹ",
+      "score": 0.99,
+      "evidence_clip": "room_d6953893-80af-4442-ac3b-bd07e7c1db9b_seg0_161667.mp3",
+      "chunk_index": 7
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 4.86,
+      "text": "vãi lồn",
+      "score": 0.99,
+      "evidence_clip": "room_d6953893-80af-4442-ac3b-bd07e7c1db9b_seg0_25bc47.mp3",
+      "chunk_index": 8
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 2.22,
+      "text": "con cặc",
+      "score": 0.99,
+      "evidence_clip": "room_d6953893-80af-4442-ac3b-bd07e7c1db9b_seg0_3c2474.mp3",
+      "chunk_index": 15
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 4.08,
+      "text": "con cặc",
+      "score": 0.99,
+      "evidence_clip": "room_d6953893-80af-4442-ac3b-bd07e7c1db9b_seg0_b2b54a.mp3",
+      "chunk_index": 18
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 5.4,
+      "text": "a lô con dạ",
+      "score": 0.99,
+      "evidence_clip": "room_d6953893-80af-4442-ac3b-bd07e7c1db9b_seg0_341658.mp3",
+      "chunk_index": 20
+    }
+  ],
+  "chunks_count": 27,
+  "last_updated": "2026-10-14T18:35:53.518822"
+}

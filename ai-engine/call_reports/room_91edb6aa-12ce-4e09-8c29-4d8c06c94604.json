@@ -1,0 +1,12 @@
+{
+  "call_id": "room_91edb6aa-12ce-4e09-8c29-4d8c06c94604",
+  "caller_id": "Nguyễn Lê Quốc Anh",
+  "receiver_id": "Nguyễn Trường Giang",
+  "timestamp": "2026-10-03T01:05:55.457972",
+  "full_transcript": "ăn không hello không cạo đi mẹ đúng đực mẹ chào",
+  "is_toxic": false,
+  "toxic_segments_count": 0,
+  "violations": [],
+  "chunks_count": 21,
+  "last_updated": "2026-10-03T01:08:07.846804"
+}

@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
-
+@import "tailwindcss";
 .u2-page {
   /* 1. Biến màu giao diện Vé Tàu */
   --navy: #101B33;
@@ -141,6 +141,7 @@
   font-size: 18px;
   color: var(--amber);
   letter-spacing: 1px;
+
 }
 .u2-nav-logo b {
   font-family: 'IBM Plex Mono', monospace;
@@ -150,6 +151,17 @@
   color: rgba(255, 253, 246, 0.6);
   margin-top: 3px;
 }
+
+}
+.u2-nav-logo b {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: rgba(255, 253, 246, 0.6);
+  margin-top: 3px;
+}
+
 
 /* NGƯỜI DÙNG: viên "vé mini" bo tròn, avatar chữ cái đầu + chấm trạng thái nhấp nháy */
 .u2-user-pill {
@@ -246,44 +258,148 @@
   width: 100%;
 }
 
-/* THANH SIDEBAR TRÁI */
+/* THANH SIDEBAR TRÁI — flex column: menu cuộn, lưu ý luôn hiện ở đáy */
 .u2-sidebar {
   position: fixed;
   top: 56px;
   left: 0;
   width: 280px;
   bottom: 0;
-  padding: 16px 8px;
-  overflow-y: auto;
+  padding: 12px 10px 14px;
+  overflow: hidden;
   display: none; /* Ẩn trên mobile */
+  flex-direction: column;
   background: var(--fb-card);
   border-right: 1px solid var(--fb-divider);
+  box-sizing: border-box;
 }
 @media (min-width: 768px) {
-  .u2-sidebar { display: block; }
-  /* Chừa chỗ bên trái cho sidebar cố định */
+  .u2-sidebar { display: flex; }
   .u2-main-content { margin-left: 280px; }
 }
+
+.u2-sidebar__label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fb-muted);
+  padding: 4px 10px 10px;
+  flex-shrink: 0;
+}
+
+.u2-sidebar__nav {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  scrollbar-width: thin;
+}
+
 .u2-menu-item {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: 10px;
   color: var(--fb-text);
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 550;
   cursor: pointer;
-  transition: background 0.2s;
-  margin-bottom: 4px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  border: 1px solid transparent;
+  flex-shrink: 0;
 }
 .u2-menu-item:hover {
   background: var(--fb-hover);
 }
 .u2-menu-item.active {
-  background: rgba(255, 180, 0, 0.14);
-  color: var(--amber-dark);
-  font-weight: 700;
+  background: rgba(24, 119, 242, 0.08);
+  border-color: rgba(24, 119, 242, 0.18);
+  color: var(--navy);
+  font-weight: 650;
+}
+
+.u2-menu-item__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  background: #f0f2f5;
+  transition: background 0.15s, box-shadow 0.15s, color 0.15s;
+}
+.u2-menu-item.active .u2-menu-item__icon {
+  background: linear-gradient(135deg, #1877f2 0%, #0d65d9 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(24, 119, 242, 0.35);
+}
+
+.u2-menu-item__text {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.u2-menu-item__label {
+  font-size: 14px;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.u2-menu-item__desc {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fb-muted);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.u2-menu-item__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #1877f2;
+  flex-shrink: 0;
+}
+
+/* Lưu ý cộng đồng — luôn dính đáy sidebar, không bị che */
+.u2-sidebar__note {
+  flex-shrink: 0;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--fb-divider);
+}
+.u2-sidebar__note-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(255, 193, 7, 0.08);
+  border: 1px solid rgba(255, 193, 7, 0.22);
+}
+.u2-sidebar__note-icon {
+  font-size: 15px;
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+.u2-sidebar__note-text {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+.u2-sidebar__note-text strong {
+  color: var(--navy);
 }
 
 /* BẢNG TIN TRUNG TÂM (NEWSFEED) */
@@ -324,12 +440,26 @@
 }
 @media (min-width: 1100px) {
   .u2-right-sidebar { display: block; }
-  /* Chừa chỗ bên phải cho sidebar cố định — CHỈ áp dụng cho màn hình
-     newsfeed (:not(.call-mode)), vì màn hình gọi video không có sidebar
-     phải nên không cần chừa chỗ, tránh bị lệch layout lãng phí. */
-  .u2-main-content:not(.call-mode) { margin-right: 280px; }
+  /* CHỈ chừa chỗ bên phải cho các trang thật sự có thanh sidebar phải (loại trừ call-mode và tea-mode) */
+  .u2-main-content:not(.call-mode):not(.tea-mode) { 
+    margin-right: 280px; 
+  }
+}
+/* 2. Cho phép .tea-mode bung toàn bộ chiều rộng, không bị padding 16px bóp nghẹt */
+.u2-main-content.tea-mode {
+  padding: 0 !important;
+  display: block !important;
+  margin-right: 0 !important;
+  height: calc(100vh - 56px);
+  overflow: hidden;
 }
 
+@media (max-width: 768px) {
+  .u2-main-content.tea-mode {
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
+}
 
 /* ==========================================
    GIAO DIỆN CHIẾC VÉ TÀU (LÚC CHƯA ĐĂNG NHẬP)
@@ -2111,4 +2241,615 @@ Update-new-code-04
 }
 .u2-inline-gif-carousel div::-webkit-scrollbar-thumb:hover {
   background: var(--amber);
+
+}
+/* ==========================================
+   MODULE HOUSING (TÌM PHÒNG TRỌ & Ở GHÉP)
+   ========================================== */
+.u2-module { 
+  width: 100%; 
+  max-width: 1100px; 
+}
+.u2-module-toolbar { 
+  display: flex; justify-content: space-between; align-items: center; 
+  margin-bottom: 20px; 
+}
+.u2-module-kicker { 
+  font-size: 13px; font-weight: 600; color: var(--amber-dark); 
+  margin: 0 0 4px; letter-spacing: 0.05em; 
+}
+.u2-module-title { font-size: 28px; color: var(--navy); margin: 0; }
+.u2-module-sub { font-size: 14px; color: var(--ink-muted); margin: 4px 0 0; }
+
+/* Bố cục chia cột (Bên trái Filter, Bên phải Grid/List) */
+.u2-chotot-layout { 
+  display: flex; gap: 24px; align-items: flex-start; 
+}
+.u2-filter-panel { 
+  width: 280px; background: var(--paper); border: 1px solid var(--fb-divider); 
+  border-radius: 12px; padding: 16px; flex-shrink: 0; 
+  position: sticky; top: 76px; /* Cuộn dính trên màn hình */
+}
+.u2-filter-panel .u2-input, .u2-filter-panel input[type="range"] { 
+  width: 100%; margin-bottom: 12px; 
+}
+.u2-view-toggle { 
+  display: flex; gap: 8px; margin-top: 16px; 
+}
+.u2-view-toggle button { 
+  flex: 1; padding: 8px; border: 1px solid var(--fb-divider); 
+  background: var(--fb-bg); border-radius: 8px; font-weight: 500; 
+  cursor: pointer; color: var(--ink-muted); transition: all 0.2s; 
+}
+.u2-view-toggle button.on { 
+  background: var(--amber); border-color: var(--amber); 
+  color: var(--navy); font-weight: 700; 
+}
+
+/* Lưới hiển thị danh sách phòng */
+.u2-listing-grid { flex: 1; display: grid; gap: 16px; }
+.u2-listing-grid.grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.u2-listing-grid.list { grid-template-columns: 1fr; }
+
+/* Thẻ tin đăng (Card) */
+.u2-listing-card { 
+  background: var(--paper); border: 1px solid var(--fb-divider); 
+  border-radius: 12px; overflow: hidden; cursor: pointer; 
+  transition: transform 0.2s, box-shadow 0.2s; 
+}
+.u2-listing-card:hover { 
+  transform: translateY(-4px); 
+  box-shadow: 0 8px 24px rgba(16,27,51,0.08); border-color: var(--amber); 
+}
+.u2-listing-grid.list .u2-listing-card { display: flex; align-items: stretch; }
+
+/* Hình thu nhỏ phòng */
+.u2-listing-thumb { 
+  height: 180px; background-size: cover; background-position: center; 
+  background-color: var(--fb-bg); 
+}
+.u2-listing-grid.list .u2-listing-thumb { 
+  width: 220px; height: auto; flex-shrink: 0; border-right: 1px solid var(--fb-divider); 
+}
+
+/* Thông tin chữ bên trong Card */
+.u2-listing-body { padding: 14px 16px; }
+.u2-listing-price { 
+  display: block; font-size: 17px; font-weight: 700; color: var(--red); margin-bottom: 6px; 
+}
+.u2-listing-body h3 { 
+  font-size: 15px; color: var(--navy); margin: 0 0 6px; line-height: 1.4; 
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; 
+}
+.u2-listing-body p { font-size: 13px; color: var(--ink-muted); margin: 0; line-height: 1.5; }
+
+/* ==========================================
+   MODAL CHI TIẾT PHÒNG TRỌ & SLIDER ẢNH
+   ========================================== */
+.u2-detail-modal { 
+  background: var(--paper); width: 640px; max-width: 100%; border-radius: 18px; 
+  display: flex; flex-direction: column; max-height: 90vh; overflow: hidden; 
+  animation: u2-pop-in 0.2s ease; position: relative; 
+}
+.u2-carousel { 
+  width: 100%; height: 320px; background: #0B1428; 
+  display: flex; align-items: center; justify-content: center; position: relative; 
+}
+.u2-carousel img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.u2-car-nav { 
+  position: absolute; top: 50%; transform: translateY(-50%); 
+  background: rgba(16,27,51,0.6); color: #fff; border: none; 
+  width: 36px; height: 36px; border-radius: 50%; font-size: 20px; 
+  display: flex; align-items: center; justify-content: center; 
+  cursor: pointer; transition: background 0.2s; 
+}
+.u2-car-nav:hover { background: var(--amber); color: var(--navy); }
+.u2-car-nav.left { left: 12px; }
+.u2-car-nav.right { right: 12px; }
+
+.u2-detail-body { padding: 24px; overflow-y: auto; }
+.u2-detail-body h2 { font-size: 20px; margin: 0 0 8px; color: var(--navy); line-height: 1.4; }
+.u2-map { 
+  width: 100%; height: 240px; border: 1px solid var(--fb-divider); 
+  border-radius: 12px; margin: 20px 0; background: var(--fb-bg); 
+}
+.u2-contact-row { 
+  display: flex; gap: 12px; align-items: center; margin-top: 24px; 
+  border-top: 1px solid var(--fb-divider); padding-top: 20px; 
+}
+.u2-contact-row .u2-btn { text-decoration: none; text-align: center; flex: 1; }
+
+/* Responsive Mobile cho Chợ / Nhà ở */
+@media screen and (max-width: 900px) {
+  .u2-chotot-layout { flex-direction: column; gap: 16px; }
+  .u2-filter-panel { width: 100%; position: static; }
+  .u2-module-toolbar { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .u2-listing-grid.list .u2-listing-card { flex-direction: column; }
+  .u2-listing-grid.list .u2-listing-thumb { 
+    width: 100%; height: 180px; border-right: none; border-bottom: 1px solid var(--fb-divider); 
+  }
+}
+/* ==========================================
+   MODULE TÌM PHÒNG TRỌ & CHỢ SINH VIÊN (DÙNG CHUNG)
+   Giao diện chia cột kiểu "Chợ Tốt"
+   ========================================== */
+
+/* 1. Header của Module */
+.u2-module {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.u2-module-toolbar {
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center;
+  margin-bottom: 24px;
+}
+.u2-module-kicker {
+  font-size: 13px; 
+  font-weight: 700; 
+  color: var(--amber-dark);
+  margin: 0 0 6px; 
+  letter-spacing: 0.08em;
+}
+.u2-module-title { font-size: 28px; color: var(--navy); margin: 0; }
+.u2-module-sub { font-size: 14px; color: var(--ink-muted); margin: 6px 0 0; }
+.u2-module-cta { padding: 10px 20px; font-size: 14px; border-radius: 8px; }
+
+/* 2. Bố cục chính (Trái: Bộ lọc, Phải: Lưới) */
+.u2-chotot-layout {
+  display: flex; 
+  gap: 24px; 
+  align-items: flex-start;
+}
+
+/* 3. Panel Bộ lọc (Cột trái) */
+.u2-filter-panel {
+  width: 280px; 
+  background: var(--paper); 
+  border: 1px solid var(--fb-divider);
+  border-radius: 12px; 
+  padding: 20px; 
+  flex-shrink: 0;
+  position: sticky; 
+  top: 76px; /* Cuộn dính theo màn hình */
+}
+.u2-filter-panel .u2-input, 
+.u2-filter-panel input[type="range"] {
+  width: 100%; 
+  margin-bottom: 16px; 
+  margin-top: 6px;
+}
+.u2-filter-panel .u2-label {
+  margin-top: 12px; 
+  display: block; 
+  font-weight: 600; 
+  font-size: 13px; 
+  color: var(--navy);
+}
+
+/* Nút bọc tag tiện ích / danh mục */
+.u2-chip-wrap {
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 8px;
+  margin-top: 8px; 
+  margin-bottom: 16px;
+}
+.u2-chip-wrap .u2-reason-chip {
+  padding: 6px 12px; 
+  font-size: 12px; 
+  border-radius: 20px;
+  border: 1px solid var(--fb-divider); 
+  background: var(--paper);
+  cursor: pointer; 
+  transition: all 0.2s; 
+  color: var(--ink);
+}
+.u2-chip-wrap .u2-reason-chip:hover {
+  border-color: var(--navy);
+}
+.u2-chip-wrap .u2-reason-chip.active {
+  background: var(--navy); 
+  color: var(--paper); 
+  border-color: var(--navy);
+}
+
+/* Nút chuyển chế độ xem (Lưới/Danh sách) */
+.u2-view-toggle {
+  display: flex; 
+  gap: 8px; 
+  margin-top: 16px;
+}
+.u2-view-toggle button {
+  flex: 1; 
+  padding: 8px; 
+  border: 1px solid var(--fb-divider);
+  background: var(--fb-bg); 
+  border-radius: 8px; 
+  font-weight: 500;
+  cursor: pointer; 
+  color: var(--ink-muted); 
+  transition: all 0.2s;
+}
+.u2-view-toggle button.on {
+  background: var(--amber); 
+  border-color: var(--amber);
+  color: var(--navy); 
+  font-weight: 700;
+}
+
+/* 4. Lưới hiển thị danh sách (Cột phải) */
+.u2-listing-grid { flex: 1; display: grid; gap: 16px; width: 100%; }
+.u2-listing-grid.grid { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.u2-listing-grid.list { grid-template-columns: 1fr; }
+
+/* 5. Thẻ tin đăng (Card) */
+.u2-listing-card {
+  background: var(--paper); 
+  border: 1px solid var(--fb-divider);
+  border-radius: 12px; 
+  overflow: hidden; 
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  display: flex; 
+  flex-direction: column;
+}
+.u2-listing-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(16,27,51,0.08);
+  border-color: var(--amber);
+}
+.u2-listing-grid.list .u2-listing-card { flex-direction: row; align-items: stretch; }
+
+/* Hình thu nhỏ sản phẩm / phòng */
+.u2-listing-thumb {
+  height: 180px; 
+  width: 100%;
+  background-size: cover; 
+  background-position: center;
+  background-color: var(--fb-bg);
+  border-bottom: 1px solid var(--fb-divider);
+}
+.u2-listing-grid.list .u2-listing-thumb {
+  width: 240px; 
+  height: auto; 
+  flex-shrink: 0;
+  border-right: 1px solid var(--fb-divider); 
+  border-bottom: none;
+}
+
+/* Thông tin chữ bên trong Card */
+.u2-listing-body { padding: 14px 16px; flex: 1; display: flex; flex-direction: column; }
+.u2-listing-price {
+  display: block; font-size: 17px; font-weight: 700; color: var(--red); margin-bottom: 6px;
+}
+.u2-listing-body h3 {
+  font-size: 15px; color: var(--navy); margin: 0 0 6px; line-height: 1.4;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.u2-listing-body p {
+  font-size: 13px; color: var(--ink-muted); margin: 0; line-height: 1.5; margin-top: auto;
+}
+
+/* 6. Modal Chi tiết */
+.u2-detail-modal {
+  background: var(--paper); width: 640px; max-width: 100%; border-radius: 18px;
+  display: flex; flex-direction: column; max-height: 90vh; overflow: hidden;
+  animation: u2-pop-in 0.2s ease; position: relative;
+}
+.u2-carousel {
+  width: 100%; height: 320px; background: var(--navy);
+  display: flex; align-items: center; justify-content: center; position: relative;
+}
+.u2-carousel img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.u2-car-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  background: rgba(16,27,51,0.6); color: #fff; border: none;
+  width: 36px; height: 36px; border-radius: 50%; font-size: 20px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background 0.2s;
+}
+.u2-car-nav:hover { background: var(--amber); color: var(--navy); }
+.u2-car-nav.left { left: 12px; }
+.u2-car-nav.right { right: 12px; }
+
+.u2-detail-body { padding: 24px; overflow-y: auto; }
+.u2-detail-body h2 { font-size: 20px; margin: 0 0 8px; color: var(--navy); line-height: 1.4; }
+.u2-contact-row {
+  display: flex; gap: 12px; align-items: center; margin-top: 24px;
+  border-top: 1px solid var(--fb-divider); padding-top: 20px;
+}
+
+.u2-profile-form {
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+/* 7. Responsive Mobile */
+@media screen and (max-width: 900px) {
+  .u2-chotot-layout { flex-direction: column; gap: 16px; }
+  .u2-filter-panel { width: 100%; position: static; }
+  .u2-module-toolbar { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .u2-listing-grid.list .u2-listing-card { flex-direction: column; }
+  .u2-listing-grid.list .u2-listing-thumb {
+    width: 100%; height: 180px; border-right: none; border-bottom: 1px solid var(--fb-divider);
+  }
+}
+/* ==========================================
+   USER PROFILE DRAWER (NGĂN KÉO HỒ SƠ)
+   ========================================== */
+
+/* Lớp phủ đen mờ toàn màn hình */
+.u2-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 27, 51, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end; /* Ép Drawer nằm sát bên phải */
+  animation: u2-fade-in 0.2s ease;
+}
+
+/* Bản thân thanh trượt Drawer */
+.u2-drawer {
+  width: 400px;
+  max-width: 100vw; /* Responsive: không tràn màn hình điện thoại */
+  height: 100%;
+  background: var(--paper);
+  box-shadow: -8px 0 32px rgba(16, 27, 51, 0.2);
+  display: flex;
+  flex-direction: column;
+  animation: u2-slide-left 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  overflow-y: auto;
+}
+
+@keyframes u2-slide-left {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+/* Khu vực tiêu đề Drawer (Header) */
+.u2-drawer-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: var(--navy);
+  border-bottom: 3px solid var(--amber);
+}
+
+/* Phần hiển thị Tên & Avatar to (Hero Section) */
+.u2-drawer-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  background: radial-gradient(circle at top right, rgba(255, 180, 0, 0.08), transparent 60%);
+  border-bottom: 1px solid var(--fb-divider);
+}
+
+.u2-drawer-hero .u2-drawer-avatar {
+  width: 64px;
+  height: 64px;
+  font-size: 28px;
+  border-width: 2px; /* Viền dày hơn bình thường một chút */
+}
+
+.u2-drawer-hero h2 {
+  font-size: 22px;
+  color: var(--navy);
+  margin: 0 0 4px;
+  line-height: 1.2;
+}
+
+.u2-drawer-hero p {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  color: var(--ink-muted);
+  margin: 0;
+}
+
+/* Chữ hiển thị lúc đang loading */
+.u2-drawer-muted {
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--ink-muted);
+  font-style: italic;
+  font-size: 14px;
+}
+
+/* ==========================================
+   HIỂN THỊ THÔNG TIN HỒ SƠ (READ-ONLY)
+   ========================================== */
+.u2-profile-dl {
+  padding: 24px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.u2-profile-dl div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--fb-divider);
+}
+
+.u2-profile-dl div:last-child {
+  border-bottom: none;
+}
+
+.u2-profile-dl dt {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-muted);
+}
+
+.u2-profile-dl dd {
+  font-size: 15px;
+  color: var(--ink);
+  margin: 0;
+  font-weight: 500;
+}
+
+/* ==========================================
+   FORM CHỈNH SỬA HỒ SƠ (EDIT MODE)
+   ========================================== */
+.u2-profile-form {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.u2-profile-form .u2-label {
+  margin-top: 12px;
+}
+
+.u2-profile-form .u2-label:first-child {
+  margin-top: 0;
+}
+
+/* Khu vực chứa nút bấm dưới cùng */
+.u2-drawer-actions {
+  padding: 20px 24px 30px;
+  display: flex;
+  gap: 12px;
+  margin-top: auto; /* Đẩy xuống sát đáy Drawer */
+  border-top: 1px solid var(--fb-divider);
+  background: var(--paper);
+}
+
+.u2-drawer-actions .u2-btn {
+  flex: 1; /* Các nút chia đều chiều rộng */
+}
+
+/* ==========================================
+   USER CHIP (THẺ TÊN NGƯỜI DÙNG NHỎ)
+   ========================================== */
+.u2-user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 4px;
+  background: rgba(255, 253, 246, 0.8);
+  border: 1px solid var(--fb-divider);
+  border-radius: 999px;
+  cursor: pointer;
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.u2-user-chip:hover {
+  background: #fff;
+  border-color: var(--amber);
+  box-shadow: 0 2px 8px rgba(255, 180, 0, 0.15);
+  transform: translateY(-1px);
+}
+/* ==========================================
+   MODULE SOCIAL (TRÀ CHANH TÁN GẪU: CONFESSION & CHAT ALL)
+   ========================================== */
+
+/* 1. Ẩn thanh cuộn (Scrollbar) nhưng vẫn cho phép cuộn */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* 2. Custom Scrollbar mỏng, thanh lịch cho khung Chat & Danh sách Online */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 5px;
+}
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: rgba(16, 27, 51, 0.15);
+  border-radius: 10px;
+}
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: var(--amber);
+}
+
+/* 3. Hoạt ảnh (Animations) dùng trong Social Module */
+
+/* Nhịp đập (pulse) cho chấm xanh trạng thái Online */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+.animate-pulse {
+  animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Hiệu ứng trượt lên nhẹ khi mở thanh Reply / Emoji */
+@keyframes u2-slide-up-suggest {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.u2-animate-suggest {
+  animation: u2-slide-up-suggest 0.2s ease-out forwards;
+}
+
+/* Hiệu ứng nảy (Pop-in) cho Sticker khi gửi vào khung chat */
+@keyframes u2-pop-in-sticker {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.u2-animate-pop-in {
+  animation: u2-pop-in-sticker 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* 4. Fix hiển thị chữ xuống dòng tự nhiên trong Confession */
+.whitespace-pre-wrap {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* ==========================================================
+   TRÀ CHANH TÁN GẪU
+   Toàn bộ style của Confession + Hub (class .tc-*) nằm trong
+   teachat.css. Khối .tc-* cũ ở đây đã bị XÓA vì trùng tên
+   (.tc-tabs, .tc-composer, .tc-avatar, .tc-comments...) làm
+   đè và phá layout của bản mới.
+   ========================================================== */
+
+/* Chế độ tea-mode: để Hub tự quản lý padding/chiều rộng + chiều cao đầy viewport */
+.u2-main-content.tea-mode {
+  padding: 0 !important;
+  display: block !important;
+  margin-right: 0 !important;
+  max-width: none !important;
+  min-width: 0;
+  height: calc(100vh - 56px);
+  overflow: hidden;
+}
+@media (min-width: 768px) {
+  .u2-main-content.tea-mode { margin-left: 280px; }
+}
+/* Ẩn triệt để nút tăng/giảm số trên tất cả trình duyệt */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  margin: 0 !important;
+}
+
+input[type="number"] {
+  -webkit-appearance: textfield !important;
+  -moz-appearance: textfield !important;
+  appearance: textfield !important;
 }

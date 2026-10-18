@@ -1,0 +1,213 @@
+/* ==========================================================
+   TRÀ CHANH TÁN GẪU – PHẦN MỞ RỘNG (V3)
+   Import SAU teachat.css:  import './teachat.extra.css';
+
+   LƯU Ý MOBILE (Messenger-style):
+   - Emoji / GIF picker / Trò chơi (.tcc-popup) → bottom-sheet
+     sát thanh soạn tin, chỉ áp dụng trong @media (max-width: 860px)
+     của teachat.css. Desktop không bị ảnh hưởng.
+   - Gợi ý GIF tự động (.tcc-suggest) → giữ dạng thanh nổi,
+     KHÔNG ép thành bottom-sheet.
+   ========================================================== */
+
+/* ---------- PANEL (giữ cả 2 tab luôn mount) ---------- */
+.tc-panel { width: 100%; height: 100%; }
+.tc-panel[hidden] { display: none !important; }
+
+/* ---------- HEADER: chip kết nối + badge chưa đọc ---------- */
+.tc-topbar__right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.tc-conn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 14px; border-radius: 999px;
+  background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .16);
+  color: rgba(255, 255, 255, .88);
+  font: 700 12px/1 'Inter', sans-serif; white-space: nowrap;
+}
+.tc-conn__dot { width: 9px; height: 9px; border-radius: 50%; background: #9ca3af; }
+.tc-conn--online .tc-conn__dot { background: #22c55e; animation: tc-ping 2s ease-in-out infinite; }
+.tc-conn--connecting .tc-conn__dot,
+.tc-conn--reconnecting .tc-conn__dot { background: var(--tc-amber, #fbb800); animation: tc-blink 1s steps(2) infinite; }
+.tc-conn--offline .tc-conn__dot { background: #ef4444; }
+@keyframes tc-ping { 0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,.55); } 50% { box-shadow: 0 0 0 6px rgba(34,197,94,0); } }
+@keyframes tc-blink { 50% { opacity: .25; } }
+
+.tc-tab { position: relative; }
+.tc-tab__badge {
+  min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px;
+  display: inline-grid; place-items: center;
+  background: #ef4444; color: #fff; font: 800 11px/1 'Inter', sans-serif;
+  box-shadow: 0 0 0 2px var(--tc-navy-light, #1b2850);
+  animation: tcc-pop .25s cubic-bezier(.2,.8,.2,1);
+}
+.tc-tab:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+
+/* ---------- BANNER MẤT KẾT NỐI ---------- */
+.tc-banner {
+  flex-shrink: 0; padding: 9px 20px; text-align: center;
+  font: 600 13px/1.4 'Inter', sans-serif; z-index: 15;
+}
+.tc-banner--connecting,
+.tc-banner--reconnecting { background: #fff4d6; color: #7a4b00; border-bottom: 1px solid #f3dc9a; }
+.tc-banner--offline { background: #fee2e2; color: #991b1b; border-bottom: 1px solid #fecaca; }
+
+/* ---------- CHAT: PRESENCE ---------- */
+.tcc-dot--off { background: #f59e0b; animation: tc-blink 1s steps(2) infinite; }
+.tcc-online__item { position: relative; padding: 2px 4px; border-radius: 10px; transition: background .15s; }
+.tcc-online__item:hover { background: #f6f7fa; }
+.tcc-presence {
+  flex-shrink: 0; width: 9px; height: 9px; border-radius: 50%;
+  background: #22c55e; box-shadow: 0 0 0 2px #fff;
+}
+.tcc-presence--away { background: #f59e0b; }
+.tcc-presence--offline { background: #9ca3af; }
+.tcc-you {
+  flex-shrink: 0; padding: 2px 8px; border-radius: 999px;
+  background: #fff4d6; color: #8a5a00; font: 800 10.5px/1.4 'Inter', sans-serif; letter-spacing: .04em;
+}
+
+/* ---------- CHAT: TRẠNG THÁI GỬI TIN ---------- */
+.tcc-bubble--sending { opacity: .62; }
+.tcc-bubble--failed { background: #fee2e2 !important; color: #991b1b !important; border: 1px solid #fca5a5; }
+.tcc-bubble--deleted {
+  background: transparent !important; border: 1px dashed #cfd5e2 !important; box-shadow: none !important;
+  color: #8a92a6 !important; font-style: italic; font-size: 13.5px;
+}
+.tcc-status-line { margin: 3px 4px 0; font-size: 11.5px; color: #8a92a6; }
+.tcc-status-line--err { color: #dc2626; font-weight: 700; }
+.tcc-retry {
+  padding: 0; border: 0; background: none; font: inherit; font-weight: 800;
+  color: #1d4ed8; text-decoration: underline; cursor: pointer;
+}
+.tcc-retry:hover { color: #1e40af; }
+
+/* ---------- CHAT: VẠCH "TIN NHẮN MỚI" ---------- */
+.tcc-unread { display: flex; align-items: center; gap: 12px; margin: 14px 18px 4px; }
+.tcc-unread::before, .tcc-unread::after { content: ''; flex: 1; height: 1px; background: #ef4444; opacity: .55; }
+.tcc-unread span {
+  padding: 3px 12px; border-radius: 999px; background: #ef4444; color: #fff;
+  font: 800 11px/1.5 'Inter', sans-serif; letter-spacing: .05em; text-transform: uppercase;
+  animation: tcc-pop .3s cubic-bezier(.2,.8,.2,1);
+}
+
+/* ---------- CONFESSION: THANH LỌC ---------- */
+.tc-toolbar2 { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 0 4px; }
+.tc-seg {
+  display: inline-flex; padding: 4px; gap: 2px;
+  background: #fff; border: 1px solid var(--tc-line, #e4e7ee); border-radius: 12px;
+}
+.tc-seg__btn {
+  padding: 8px 16px; border: 0; border-radius: 999px; background: transparent;
+  font: 700 13px/1 'Inter', sans-serif; color: #5b6478; cursor: pointer; transition: background .15s, color .15s;
+}
+.tc-seg__btn:hover { background: #f1f3f8; }
+.tc-seg__btn--on, .tc-seg__btn--on:hover { background: var(--tc-navy, #101a35); color: var(--tc-amber, #fbb800); }
+.tc-chk { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; font: 600 13px/1 'Inter', sans-serif; color: #4b5365; }
+.tc-chk input { width: 16px; height: 16px; margin: 0; accent-color: var(--tc-navy, #101a35); cursor: pointer; }
+.tc-chip {
+  padding: 6px 12px; border: 0; border-radius: 999px; background: #e0ecff; color: #1d4ed8;
+  font: 800 12.5px/1 'Inter', sans-serif; cursor: pointer;
+}
+.tc-chip:hover { background: #cfe0ff; }
+.tc-toolbar2__count { margin-left: auto; font-size: 12.5px; color: var(--tc-muted, #6b7385); font-weight: 600; }
+
+/* ---------- CONFESSION: SOẠN THẢO ---------- */
+.tc-textarea { transition: height .12s ease, border-color .15s, box-shadow .15s, background .15s; }
+.tc-composer__meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 6px; min-height: 18px; }
+.tc-composer__hint { font-size: 12px; color: #9aa1b2; }
+.tc-composer__err { font-size: 12.5px; font-weight: 700; color: #dc2626; }
+.tc-composer__meta .tc-counter { margin: 0 0 0 auto; }
+.tc-counter--near { color: #d97706; font-weight: 700; }
+
+/* ---------- CONFESSION: BÀI VIẾT ---------- */
+.tc-post__you {
+  margin-left: 8px; padding: 2px 8px; border-radius: 999px;
+  background: #fff4d6; color: #8a5a00; font: 800 10.5px/1.4 'Inter', sans-serif;
+}
+.tc-post__head { position: relative; }
+.tc-menu { position: relative; margin-left: 4px; }
+.tc-post__time--right + .tc-menu { margin-left: 8px; }
+.tc-post__who { flex: 1; }
+.tc-menu__btn {
+  width: 34px; height: 34px; display: grid; place-items: center;
+  border: 0; border-radius: 50%; background: transparent;
+  font-size: 20px; font-weight: 800; line-height: 1; color: #6b7385; cursor: pointer;
+  transition: background .15s;
+}
+.tc-menu__btn:hover { background: #f1f3f8; }
+.tc-menu__list {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 25; min-width: 220px; padding: 6px;
+  background: #fff; border: 1px solid var(--tc-line, #e4e7ee); border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(16, 27, 51, .2); animation: tcc-pop .15s ease; transform-origin: top right;
+}
+.tc-menu__list button {
+  display: block; width: 100%; padding: 10px 12px; border: 0; border-radius: 999px;
+  background: transparent; text-align: left; cursor: pointer;
+  font: 600 13.5px/1.3 'Inter', sans-serif; color: #1f2937;
+}
+.tc-menu__list button:hover { background: #f1f3f8; }
+.tc-menu__list .tc-menu__danger { color: #dc2626; }
+.tc-menu__list .tc-menu__danger:hover { background: #fee2e2; }
+
+.tc-link { color: #2563eb; text-decoration: underline; word-break: break-all; }
+.tc-tag {
+  padding: 0; border: 0; background: none; font: inherit; font-weight: 700;
+  color: #1d4ed8; cursor: pointer;
+}
+.tc-tag:hover { text-decoration: underline; }
+.tc-post__more { font-weight: 700; color: #6b7385; }
+
+.tc-react:focus-visible, .tc-seg__btn:focus-visible, .tc-menu__btn:focus-visible { outline: 3px solid rgba(96, 165, 250, .6); outline-offset: 1px; }
+
+/* ---------- CONFESSION: BÌNH LUẬN ---------- */
+.tc-bubble { position: relative; }
+.tc-bubble--deleted {
+  background: transparent; border: 1px dashed #cfd5e2; box-shadow: none;
+  color: #8a92a6; font-size: 13px; font-style: italic;
+}
+.tc-bubble__likes {
+  position: absolute; right: -8px; bottom: -10px; padding: 2px 8px; border-radius: 999px;
+  background: #fff; border: 1px solid var(--tc-line, #e4e7ee); box-shadow: 0 1px 4px rgba(20, 30, 60, .12);
+  font: 700 11.5px/1.4 'Inter', sans-serif; color: #4b5365;
+}
+.tc-link-btn--on { color: #2563eb; font-weight: 800; }
+.tc-link-btn--danger:hover { color: #dc2626; }
+.tc-comments__more { margin: 0 0 12px; font-size: 13px; font-weight: 700; color: #5b6478; }
+.tc-replies__toggle { margin: 6px 0 0 18px; font-size: 12.5px; font-weight: 700; color: #6b7385; }
+
+/* ---------- TẢI THÊM + TOAST ---------- */
+.tc-more { display: flex; justify-content: center; padding: 6px 0 18px; }
+.tc-btn-ghost {
+  padding: 11px 26px; border: 1px solid var(--tc-line, #e4e7ee); border-radius: 999px; background: #fff;
+  font: 700 13.5px/1 'Inter', sans-serif; color: #4b5365; cursor: pointer; box-shadow: 0 1px 4px rgba(20, 30, 60, .06);
+  transition: transform .15s, border-color .15s;
+}
+.tc-btn-ghost:hover { transform: translateY(-1px); border-color: var(--tc-amber, #fbb800); }
+
+.tc-toast {
+  position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 60;
+  display: flex; align-items: center; gap: 16px; max-width: min(92vw, 520px);
+  padding: 12px 18px; border-radius: 14px; background: rgba(16, 27, 51, .95); color: #fff;
+  font: 600 13.5px/1.4 'Inter', sans-serif; box-shadow: 0 10px 30px rgba(16, 27, 51, .35);
+  animation: tcc-pop .22s cubic-bezier(.2,.8,.2,1);
+}
+.tc-toast button {
+  flex-shrink: 0; padding: 0; border: 0; background: none; cursor: pointer;
+  font: 800 13.5px/1 'Inter', sans-serif; color: var(--tc-amber, #fbb800); text-transform: uppercase; letter-spacing: .04em;
+}
+.tc-toast button:hover { text-decoration: underline; }
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 680px) {
+  .tc-topbar__right { width: 100%; justify-content: space-between; }
+  .tc-conn { font-size: 11px; padding: 6px 10px; }
+  .tc-toolbar2 { gap: 8px; }
+  .tc-seg__btn { padding: 8px 12px; }
+  .tc-toast { bottom: 18px; }
+  .tc-menu__list { min-width: 200px; }
+}
+
+/* ---------- GIẢM CHUYỂN ĐỘNG ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .tc-conn__dot, .tc-tab__badge, .tc-toast, .tc-menu__list, .tcc-unread span, .tcc-dot--off { animation: none; }
+  .tc-textarea { transition: none; }
+}

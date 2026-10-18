@@ -1,0 +1,12 @@
+{
+  "call_id": "call_3x5dx3s",
+  "caller_id": "user_A",
+  "receiver_id": "Unknown",
+  "timestamp": "2026-10-08T11:29:43.602978",
+  "full_transcript": "rồi",
+  "is_toxic": false,
+  "toxic_segments_count": 0,
+  "violations": [],
+  "chunks_count": 1,
+  "last_updated": "2026-10-08T11:29:43.602978"
+}

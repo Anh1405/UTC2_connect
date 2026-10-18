@@ -1,0 +1,31 @@
+{
+  "call_id": "room_156fbb6a-795e-47d5-b8ed-efc250c8fb6a",
+  "caller_id": "Nguyễn Trường Giang",
+  "receiver_id": "Nguyễn Lê Quốc Anh",
+  "timestamp": "2026-10-18T01:44:52.751862",
+  "full_transcript": "dạ dạ xin chào mẹ quê em khuyến khốn nạn đó a lô hello ok một hai đây này bạn hiểu đây thế ạ em",
+  "is_toxic": true,
+  "toxic_segments_count": 2,
+  "violations": [
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 4.2,
+      "text": "mẹ quê",
+      "score": 0.99,
+      "evidence_clip": "room_156fbb6a-795e-47d5-b8ed-efc250c8fb6a_seg0_0fc6b7.mp3",
+      "chunk_index": 7
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 2.16,
+      "text": "em khuyến khốn nạn",
+      "score": 0.99,
+      "evidence_clip": "room_156fbb6a-795e-47d5-b8ed-efc250c8fb6a_seg0_70825b.mp3",
+      "chunk_index": 8
+    }
+  ],
+  "chunks_count": 34,
+  "last_updated": "2026-10-18T01:46:19.351263"
+}

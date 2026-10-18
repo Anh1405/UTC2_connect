@@ -1,0 +1,40 @@
+{
+  "call_id": "room_f99bc1fc-44a6-4d97-be1d-05a31733c483",
+  "caller_id": "Nguyễn Lê Quốc Anh",
+  "receiver_id": "Nguyễn Trường Giang",
+  "timestamp": "2026-10-03T01:08:16.082614",
+  "full_transcript": "chào chào bực dồi ôi vãi lồn địt con mẹ địt con mẹ tôi",
+  "is_toxic": true,
+  "toxic_segments_count": 3,
+  "violations": [
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 6.96,
+      "text": "bực dồi ôi vãi lồn",
+      "score": 0.99,
+      "evidence_clip": "room_f99bc1fc-44a6-4d97-be1d-05a31733c483_seg0_1202de.mp3",
+      "chunk_index": 9
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 6.96,
+      "text": "địt con mẹ",
+      "score": 0.99,
+      "evidence_clip": "room_f99bc1fc-44a6-4d97-be1d-05a31733c483_seg0_3787a7.mp3",
+      "chunk_index": 12
+    },
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 6.96,
+      "text": "địt con mẹ",
+      "score": 0.99,
+      "evidence_clip": "room_f99bc1fc-44a6-4d97-be1d-05a31733c483_seg0_f72743.mp3",
+      "chunk_index": 14
+    }
+  ],
+  "chunks_count": 15,
+  "last_updated": "2026-10-03T01:09:49.239461"
+}

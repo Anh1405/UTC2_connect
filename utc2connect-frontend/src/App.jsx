@@ -1,3 +1,61 @@
+import { useState } from 'react';
+import './App.css';
+
+import socket from './services/socket';
+
+// Hooks
+import useAuth from './hooks/useAuth';
+import useCampusData from './hooks/useCampusData';
+import useLocalCamera from './hooks/useLocalCamera';
+import useChat from './hooks/useChat';
+import useRandomCall from './hooks/useRandomCall';
+import useCameraFilters from './hooks/useCameraFilters';
+import useReport from './hooks/useReport';
+
+// Components
+import AuthScreen from './components/auth/AuthScreen';
+import DeviceOtpModal from './components/auth/DeviceOtpModal';
+import Navbar from './components/layout/Navbar';
+import Sidebar from './components/layout/Sidebar';
+import CallSection from './components/call/CallSection';
+import ReportModal from './components/call/ReportModal';
+import UserProfileDrawer from './components/profile/UserProfileDrawer';
+import HousingModule from './components/housing/HousingModule';
+import MarketModule from './components/market/MarketModule';
+import TeaChatHub from './components/social/TeaChatHub';
+
+function App() {
+  const [activeSection, setActiveSection] = useState('call'); // call | market | housing | social
+  const [profileUsername, setProfileUsername] = useState(null); // mở UserProfileDrawer
+
+  const auth = useAuth();
+  const campus = useCampusData();
+  const camera = useLocalCamera({ enabled: auth.loginSuccess, active: activeSection === 'call' });
+  const chat = useChat();
+  const call = useRandomCall({
+    loginSuccess: auth.loginSuccess,
+    userData: auth.userData,
+    localStream: camera.localStream,
+    ensureMicTrack: camera.ensureMicTrack,
+    chat,
+    onSessionExpired: (reason) => forceLogout(reason),
+  });
+  const filters = useCameraFilters(call.roomID);
+  const report = useReport({
+    roomID: call.roomID,
+    remoteVideoRef: call.remoteVideoRef,
+    remoteUsername: call.remoteUsername,
+    reporterUsername: auth.userData?.username,
+    onReportSent: call.handleNextUser,
+  });
+
+  // Dọn dẹp cuộc gọi + phiên đăng nhập, quay về màn hình Đăng nhập
+  const forceLogout = (reason) => {
+    call.handleEndCall();
+    socket.disconnect();
+    auth.clearSession();
+    setActiveSection('call');
+    if (reason) alert(reason);
 import { useState, useRef, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import io from 'socket.io-client'; // Thêm thư viện socket.io-client
@@ -1093,15 +1151,21 @@ const handleFilterChange = (type) => {
     if (mode === 'login') return 'CỔNG SOÁT VÉ ĐĂNG NHẬP';
     if (mode === 'register') return 'TUYẾN TÀU SV PHÂN HIỆU GTVT';
     return 'CẤP LẠI VÉ HÀNH TRÌNH';
+
   };
 
-  const getTagline = () => {
-    if (mode === 'login') return 'Xác thực vé vào hệ thống sinh viên';
-    if (mode === 'register') return 'Vé lên tàu vào cộng đồng sinh viên UTC2';
-    return 'Đặt lại mật khẩu truy cập hệ thống qua mã xác thực';
+  const handleOpenProfile = (uname) => {
+    const name = typeof uname === 'string' ? uname : uname?.username;
+    if (name && name !== 'Ẩn danh') setProfileUsername(name);
   };
 
+  // ================== RENDER ==================
   return (
+Update-new-code-07
+    <div
+      className="u2-page"
+      style={{ fontFamily: "'Be Vietnam Pro', 'Inter', system-ui, -apple-system, sans-serif" }}
+
   <div className="u2-page">
   {loginSuccess ? (
     <div className="u2-home-layout">
@@ -1517,261 +1581,70 @@ Update-new-code-04
       disabled={!isConnected}
       onClick={() => { setShowEmojiPicker(!showEmojiPicker); setShowGifPicker(false); }}
       style={{ background: 'none', border: 'none', cursor: isConnected ? 'pointer' : 'not-allowed', fontSize: '20px', opacity: isConnected ? 1 : 0.5 }}
+
     >
-      😀
-    </button>
-    
-    <button 
-      title="Thêm GIF"
-      disabled={!isConnected}
-      onClick={() => { setShowGifPicker(!showGifPicker); setShowEmojiPicker(false); }}
-      style={{ background: 'none', border: 'none', cursor: isConnected ? 'pointer' : 'not-allowed', fontSize: '14px', fontWeight: 'bold', color: 'var(--navy)', opacity: isConnected ? 1 : 0.5 }}
-    >
-      GIF
-    </button>
-  </div>
+      {auth.loginSuccess ? (
+        <div className="u2-home-layout">
+          <Navbar username={auth.userData?.username} onOpenProfile={handleOpenProfile} onLogout={() => forceLogout()} />
+          <Sidebar activeSection={activeSection} onSelect={setActiveSection} />
 
-  {/* Ô NHẬP TEXT VÀ NÚT GỬI */}
-  <div className="u2-send-row" style={{ display: 'flex', gap: '10px' }}>
-    <input
-      type="text"
-      placeholder={isConnected ? "Nhập tin nhắn..." : "Đang chờ kết nối..."}
-      disabled={!isConnected}
-      value={chatInput} 
-      onChange={(e) => setChatInput(e.target.value)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault(); 
-          handleSendMessage();
-        }
-      }}
-      style={{ flex: 1 }}
-    />
-    <button disabled={!isConnected} onClick={handleSendMessage}>Gửi</button>
-  </div>
-</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    ) : (
-        /* GIAO DIỆN VÉ TÀU (ĐÃ GIỮ NGUYÊN HOÀN TOÀN LOGIC CỦA BẠN) */
-        <div className="u2-ticket">
-          <div className="u2-head">
-            <div className="u2-route-code u2-mono">{getRouteCode()}</div>
-            <div className="u2-wordmark u2-display">UTC2 CONNECT</div>
-            <div className="u2-tagline">{getTagline()}</div>
+          {activeSection === 'call' && (
+            <CallSection
+              username={auth.userData?.username}
+              call={call}
+              camera={camera}
+              filters={filters}
+              chat={chat}
+              onOpenReport={report.handleOpenReport}
+            />
+          )}
 
-            <div className="u2-stations">
-              <div className="u2-dot on" />
-              <div className="u2-track">
-                <div className="u2-track-fill" style={{ width: mode === 'login' ? '50%' : (isOtpSent ? '100%' : '0%') }} />
-              </div>
-              <div className={`u2-dot ${isOtpSent || mode === 'login' ? 'on' : ''}`} />
+          {activeSection === 'market' && (
+            <div className="u2-main-content" style={{ marginLeft: 280 }}>
+              <MarketModule
+                userData={auth.userData}
+                marketItems={campus.marketItems}
+                setMarketItems={campus.setMarketItems}
+                marketOrders={campus.marketOrders}
+                setMarketOrders={campus.setMarketOrders}
+              />
             </div>
-            <div className="u2-station-labels">
-              <span>{mode === 'login' ? 'Điền thông tin' : 'Gửi OTP'}</span>
-              <span>{mode === 'login' ? 'Khởi hành' : 'Xác thực'}</span>
+          )}
+
+          {activeSection === 'housing' && (
+            <div className="u2-main-content" style={{ marginLeft: 280 }}>
+              <HousingModule
+                userData={auth.userData}
+                housingItems={campus.housingItems}
+                setHousingItems={campus.setHousingItems}
+                housingContracts={campus.housingContracts}
+                setHousingContracts={campus.setHousingContracts}
+              />
             </div>
-          </div>
+          )}
 
-          <div className="u2-perf" />
-
-          <div className="u2-body">
-            {message && <div className="u2-banner ok">{message}</div>}
-            {error && <div className="u2-banner err">{error}</div>}
-
-            {mode === 'login' && (
-              <div>
-                <label className="u2-label">Tên đăng nhập</label>
-                <input type="text" placeholder="Nhập tên tài khoản..." value={username} onChange={(e) => setUsername(e.target.value)} className="u2-input" />
-                <div style={{ height: 14 }} />
-
-                <label className="u2-label">Mật khẩu</label>
-                <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && username && password && handleLogin()} className="u2-input" />
-                
-                <div style={{ textAlign: 'right', marginTop: 6 }}>
-                  <span className="u2-link" style={{ fontSize: 12, color: 'var(--ink-muted)' }} onClick={() => switchMode('forgot')}>
-                    Quên mật khẩu?
-                  </span>
-                </div>
-                <div style={{ height: 16 }} />
-
-                <button className="u2-btn primary" disabled={loading || !username || !password} onClick={handleLogin}>
-                  {loading ? 'Đang kiểm tra...' : 'Đăng nhập vào hệ thống'}
-                </button>
-
-                <div className="u2-switch-text">
-                  Chưa có tài khoản? <span className="u2-link" onClick={() => switchMode('register')}>Đăng ký ngay</span>
-                </div>
-              </div>
-            )}
-
-            {mode === 'register' && (
-              <div>
-                {!isOtpSent ? (
-                  <div>
-                    <label className="u2-label">Email sinh viên</label>
-                    <input type="email" placeholder="vd: nva@st.utc2.edu.vn" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendOtp()} className="u2-input" />
-                    <div style={{ height: 18 }} />
-                    <button className="u2-btn primary" disabled={loading || !email} onClick={handleSendOtp}>
-                      {loading ? 'Đang gửi...' : 'Nhận mã OTP qua email'}
-                    </button>
-                  </div>
-                ) : (
-                  <div>
-                    <p style={{ fontSize: 13, color: 'var(--ink-muted)', marginBottom: 18 }}>
-                      Mã đã gửi tới <span style={{ color: 'var(--navy)', fontWeight: 600 }}>{email}</span>
-                    </p>
-
-                    <label className="u2-label">Tên đăng nhập</label>
-                    <input type="text" placeholder="Nhập tên tài khoản..." value={username} onChange={(e) => setUsername(e.target.value)} className="u2-input" />
-                    <div style={{ height: 14 }} />
-
-                    <label className="u2-label">Mật khẩu</label>
-                    <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="u2-input" />
-                    <div style={{ height: 18 }} />
-
-                    <label className="u2-label" style={{ textAlign: 'center' }}>Mã OTP (6 số)</label>
-                    <div className="u2-otp-row">
-                      {otpDigits.map((d, i) => (
-                        <input key={i} ref={(el) => (otpRefs.current[i] = el)} className="u2-otp-box u2-mono" inputMode="numeric" maxLength={1} value={d} onChange={(e) => handleOtpChange(i, e.target.value)} onKeyDown={(e) => handleOtpKeyDown(i, e)} />
-                      ))}
-                    </div>
-                    <div style={{ height: 20 }} />
-
-                    <button className="u2-btn primary" disabled={loading || !username || !password || otp.length < 6} onClick={handleRegister}>
-                      {loading ? 'Đang đăng ký...' : 'Hoàn tất đăng ký'}
-                    </button>
-                    <button className="u2-btn ghost" onClick={() => setIsOtpSent(false)}>← Thay đổi email</button>
-                  </div>
-                )}
-
-                <div className="u2-switch-text">
-                  Đã có tài khoản? <span className="u2-link" onClick={() => switchMode('login')}>Quay lại Đăng nhập</span>
-                </div>
-              </div>
-            )}
-
-            {mode === 'forgot' && (
-              <div>
-                {!isOtpSent ? (
-                  <div>
-                    <label className="u2-label">Nhập Email tài khoản cần lấy lại</label>
-                    <input type="email" placeholder="vd: nva@st.utc2.edu.vn" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendForgotOtp()} className="u2-input" />
-                    <div style={{ height: 18 }} />
-                    <button className="u2-btn primary" disabled={loading || !email} onClick={handleSendForgotOtp}>
-                      {loading ? 'Đang xác thực...' : 'Gửi mã xác thực mật khẩu'}
-                    </button>
-                  </div>
-                ) : (
-                  <div>
-                    <p style={{ fontSize: 13, color: 'var(--ink-muted)', marginBottom: 18 }}>
-                      Mã khôi phục đã gửi tới <span style={{ color: 'var(--navy)', fontWeight: 600 }}>{email}</span>
-                    </p>
-
-                    <label className="u2-label">Mật khẩu mới</label>
-                    <input type="password" placeholder="Nhập mật khẩu mới..." value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="u2-input" />
-                    <div style={{ height: 18 }} />
-
-                    <label className="u2-label" style={{ textAlign: 'center' }}>Mã xác thực OTP (6 số)</label>
-                    <div className="u2-otp-row">
-                      {otpDigits.map((d, i) => (
-                        <input key={i} ref={(el) => (otpRefs.current[i] = el)} className="u2-otp-box u2-mono" inputMode="numeric" maxLength={1} value={d} onChange={(e) => handleOtpChange(i, e.target.value)} onKeyDown={(e) => handleOtpKeyDown(i, e)} />
-                      ))}
-                    </div>
-                    <div style={{ height: 20 }} />
-
-                    <button className="u2-btn primary" disabled={loading || !newPassword || otp.length < 6} onClick={handleResetPassword}>
-                      {loading ? 'Đang đổi mật khẩu...' : 'Xác nhận đặt lại mật khẩu'}
-                    </button>
-                    <button className="u2-btn ghost" onClick={() => setIsOtpSent(false)}>← Thay đổi email</button>
-                  </div>
-                )}
-
-                <div className="u2-switch-text">
-                  <span className="u2-link" onClick={() => switchMode('login')}>Quay lại Đăng nhập</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="u2-stub">
-            <span className="u2-mono" style={{ fontSize: 10, color: 'var(--ink-muted)', letterSpacing: '0.08em' }}>
-              {mode === 'login' ? 'VÉ ĐĂNG NHẬP • UTC2-CONNECT' : mode === 'register' ? 'VÉ ĐĂNG KÝ • UTC2-CONNECT' : 'VÉ KHÔI PHỤC • UTC2-CONNECT'}
-            </span>
-            <div className="u2-barcode">
-              {[3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 1, 3].map((w, i) => <span key={i} style={{ width: w }} />)}
+          {activeSection === 'social' && (
+            <div
+              className="u2-main-content tea-mode"
+              style={{ padding: 0, display: 'block', marginRight: 0, width: 'auto' }}
+            >
+              <TeaChatHub socket={socket} currentUser={auth.userData?.username} onOpenProfile={handleOpenProfile} />
             </div>
-          </div>
-        </div>
-      )}
-      {showReportModal && (
-  <div className="u2-report-overlay" onClick={() => reportStatus !== 'sending' && setShowReportModal(false)}>
-    <div className="u2-report-ticket" onClick={(e) => e.stopPropagation()}>
-      {reportStatus === 'done' ? (
-        <div className="u2-report-done">
-          <div className="u2-report-done-icon">✅</div>
-          <p className="u2-display" style={{ fontSize: 20 }}>ĐÃ TIẾP NHẬN</p>
-          <p style={{ color: 'var(--ink-muted)', fontSize: 13 }}>
-            Cảm ơn bạn đã giúp UTC2 Connect an toàn hơn.
-          </p>
+          )}
+
+          {profileUsername && (
+            <UserProfileDrawer
+              username={profileUsername}
+              selfUsername={auth.userData?.username}
+              onClose={() => setProfileUsername(null)}
+            />
+          )}
         </div>
       ) : (
-        <>
-          <div className="u2-report-head">
-            <span className="u2-mono" style={{ fontSize: 11, letterSpacing: '0.1em', color: 'var(--amber)' }}>
-              BIÊN BẢN SỰ CỐ
-            </span>
-            <h3 className="u2-display" style={{ margin: '2px 0 0', fontSize: 22, color: 'var(--paper)' }}>
-              Tố cáo hành khách
-            </h3>
-            <button className="u2-report-close" onClick={() => setShowReportModal(false)}>✕</button>
-          </div>
-
-          <div className="u2-report-body">
-            {reportScreenshot && (
-              <div className="u2-report-evidence">
-                <img src={reportScreenshot} alt="Bằng chứng" />
-                <span>📸 Ảnh chụp làm bằng chứng</span>
-              </div>
-            )}
-
-            <p className="u2-label" style={{ marginTop: 4 }}>Lý do tố cáo</p>
-            <div className="u2-report-reasons">
-              {REPORT_REASONS.map(r => (
-                <button
-                  key={r.id}
-                  className={`u2-reason-chip ${reportReasonId === r.id ? 'active' : ''}`}
-                  onClick={() => setReportReasonId(r.id)}
-                >
-                  <span>{r.icon}</span>{r.label}
-                </button>
-              ))}
-            </div>
-
-            <textarea
-              className="u2-input"
-              style={{ resize: 'none', marginTop: 10 }}
-              rows={2}
-              placeholder="Mô tả thêm (không bắt buộc)..."
-              value={reportDetail}
-              onChange={(e) => setReportDetail(e.target.value)}
-            />
-          </div>
-
-          <div className="u2-report-footer">
-            <button className="u2-btn ghost" onClick={() => setShowReportModal(false)}>Huỷ</button>
-            <button
-              className="u2-btn primary"
-              disabled={!reportReasonId || reportStatus === 'sending'}
-              onClick={handleSubmitReport}
-            >
-              {reportStatus === 'sending' ? 'Đang gửi...' : 'Gửi biên bản'}
-            </button>
-          </div>
-        </>
+        <AuthScreen auth={auth} />
       )}
+
+
  Update-new-code-04
     </div>
   </div>
@@ -1790,41 +1663,18 @@ Update-new-code-04
         <button className="u2-report-close" onClick={() => setShowOtpModal(false)}>✕</button>
       </div>
 
-      <div className="u2-report-body" style={{ textAlign: 'center', marginTop: '16px' }}>
-        <p style={{ fontSize: 14, color: 'var(--ink-muted)', marginBottom: 20 }}>
-          Hệ thống phát hiện bạn đang đăng nhập từ thiết bị lạ. Vui lòng kiểm tra email sinh viên và nhập mã OTP để xác nhận.
-        </p>
-        
-        <input 
-          type="text" 
-          className="u2-input" 
-          placeholder="Nhập mã OTP 6 số..." 
-          value={deviceOtp}
-          onChange={(e) => setDeviceOtp(e.target.value)}
-          maxLength={6}
-          style={{ textAlign: 'center', letterSpacing: '4px', fontSize: '18px', fontWeight: 'bold' }}
-        />
-      </div>
 
-      <div className="u2-report-footer" style={{ marginTop: '20px' }}>
-        <button className="u2-btn ghost" onClick={() => setShowOtpModal(false)}>Huỷ</button>
-        <button
-          className="u2-btn primary"
-          disabled={!deviceOtp || deviceOtp.length < 6}
-          onClick={() => handleVerifyDeviceOtp(deviceOtp)}
-        >
-          Xác nhận thiết bị
-        </button>
-      </div>
+      <ReportModal report={report} />
+      <DeviceOtpModal auth={auth} />
     </div>
-  </div>
-)}
-    </div>
+
+
     </div>
   </div>
 )}
     </div>
     
+
   );
 }
 

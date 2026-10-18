@@ -1,0 +1,22 @@
+{
+  "call_id": "room_b225c1a7-acc3-4e67-82cc-d3c0bc63b01b",
+  "caller_id": "Nguyễn Lê Quốc Anh",
+  "receiver_id": "Nguyễn Trường Giang",
+  "timestamp": "2026-10-14T19:37:10.204101",
+  "full_transcript": "a lô hello học alo dạ rồi đây không ok vãi lồn alo a lô a lô ok gần",
+  "is_toxic": true,
+  "toxic_segments_count": 1,
+  "violations": [
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 4.38,
+      "text": "vãi lồn",
+      "score": 0.99,
+      "evidence_clip": "room_b225c1a7-acc3-4e67-82cc-d3c0bc63b01b_seg0_1e1956.mp3",
+      "chunk_index": 65
+    }
+  ],
+  "chunks_count": 77,
+  "last_updated": "2026-10-14T19:43:18.088985"
+}

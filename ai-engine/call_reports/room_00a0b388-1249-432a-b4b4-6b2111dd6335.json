@@ -1,0 +1,22 @@
+{
+  "call_id": "room_00a0b388-1249-432a-b4b4-6b2111dd6335",
+  "caller_id": "Nguyễn Lê Quốc Anh",
+  "receiver_id": "Nguyễn Trường Giang",
+  "timestamp": "2026-10-03T01:14:27.303294",
+  "full_transcript": "em alo ừ anh tăng cường rồi anh địt con mẹ anh hùng",
+  "is_toxic": true,
+  "toxic_segments_count": 1,
+  "violations": [
+    {
+      "segment_index": 0,
+      "start_time": 0.0,
+      "end_time": 2.4,
+      "text": "địt con mẹ",
+      "score": 0.99,
+      "evidence_clip": "room_00a0b388-1249-432a-b4b4-6b2111dd6335_seg0_5c97c0.mp3",
+      "chunk_index": 8
+    }
+  ],
+  "chunks_count": 12,
+  "last_updated": "2026-10-03T01:15:16.925344"
+}

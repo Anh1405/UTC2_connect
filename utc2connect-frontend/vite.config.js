@@ -7,7 +7,8 @@ export default defineConfig({
   plugins: [
     react(), 
     tailwindcss(), // Kích hoạt Tailwind CSS của bạn
-    mkcert()
+    mkcert(),
+    tailwindcss(),
   ],
   server: {
     host: true, // Cho phép điện thoại truy cập qua IP mạng cục bộ

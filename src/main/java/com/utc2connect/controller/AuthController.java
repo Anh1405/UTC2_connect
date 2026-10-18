@@ -128,6 +128,7 @@ public class AuthController {
         response.put("email", user.getEmail());
         response.put("accessToken", jwt);
         response.put("tokenType", "Bearer");
+        putProfileFields(response, user);
 
         return ResponseEntity.ok(response);
     }
@@ -165,6 +166,7 @@ public class AuthController {
         response.put("email", user.getEmail());
         response.put("accessToken", jwt);
         response.put("tokenType", "Bearer");
+        putProfileFields(response, user);
 
         return ResponseEntity.ok(response);
     }
@@ -207,5 +209,12 @@ public class AuthController {
         }
 
         return ResponseEntity.badRequest().body(Map.of("message", "Có lỗi xảy ra, vui lòng thử lại."));
+    }
+
+    private void putProfileFields(Map<String, Object> response, User user) {
+        response.put("displayName", user.getDisplayName() != null ? user.getDisplayName() : user.getUsername());
+        response.put("phone", user.getPhone() != null ? user.getPhone() : "");
+        response.put("khoaNganh", user.getKhoaNganh() != null ? user.getKhoaNganh() : "");
+        response.put("namHoc", user.getNamHoc() != null ? user.getNamHoc() : "");
     }
 }
