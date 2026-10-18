@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>UTC2 Connect - Hệ Thống Xác Thực</title>
     
     <!-- Import Phông Chữ -->
@@ -11,30 +11,56 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
     <meta name="theme-color" content="#101B33" />
   
-  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <!-- Đã sửa đường dẫn chuẩn cho Vite (bỏ %PUBLIC_URL%) -->
+    <link rel="manifest" href="/manifest.json" />
   
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="UTC2 Connect">
-  <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="UTC2 Connect">
+    <link rel="apple-touch-icon" href="/logo192.png">
+
     <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-</style>
+      /* Reset & Giải phóng cuộn dọc toàn trang cho Mobile */
+      *, *::before, *::after { 
+        box-sizing: border-box; 
+        margin: 0; 
+        padding: 0; 
+      }
+      
+      html, body {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 100% !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important; /* Mở quyền cuộn dọc cho điện thoại */
+        -webkit-overflow-scrolling: touch !important; /* Vuốt mượt trên Safari iOS */
+        position: static !important;
+      }
+
+      #root {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 100% !important;
+        overflow: visible !important;
+      }
+    </style>
 </head>
 <body>
 
     <div id="root"></div>
     
-    <!-- Nạp file khởi tạo React (Dành cho môi trường Vite) -->
-    <script type="module" src="/src/main.jsx">
+    <!-- 1. Thẻ nạp file chính của React Vite (Để trống thẻ đóng) -->
+    <script type="module" src="/src/main.jsx"></script>
 
-        if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(reg => console.log('✅ PWA Service Worker đã hoạt động!'))
-          .catch(err => console.log('❌ Lỗi Service Worker: ', err));
-      });
-    }
+    <!-- 2. Thẻ riêng biệt đăng ký PWA Service Worker -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('✅ PWA Service Worker đã hoạt động!'))
+            .catch(err => console.log('❌ Lỗi Service Worker: ', err));
+        });
+      }
     </script>
 
 </body>

@@ -97,7 +97,14 @@ public class SocketHandler {
 
         server.addEventListener("send_ice_candidate", WebRTCPayload.class,
                 (client, data, ack) -> server.getRoomOperations(data.getRoomID()).sendEvent("receive_ice_candidate", client, data));
-
+        // ==================== VI PHẠM NGÔN TỪ QUA GIỌNG NÓI ====================
+// Máy nghe phát hiện vi phạm -> báo cho người nói biết số lần của họ.
+        server.addEventListener("voice_violation", VoiceViolationPayload.class, (client, data, ack) -> {
+            String roomID = data.getRoomID();
+            // Chỉ relay nếu client thật sự đang ở trong phòng đó (chặn giả mạo sang phòng khác)
+            if (roomID == null || !roomID.equals(activeRooms.get(client.getSessionId()))) return;
+            server.getRoomOperations(roomID).sendEvent("voice_violation", client, data);
+        });
         // ==================== CHAT (ĐÃ TÍCH HỢP CHỐNG SPAM) ====================
         server.addEventListener("send_message", MessagePayload.class, (client, data, ack) -> {
             // Lấy username của client đang gửi tin (nếu chưa có thì lấy tạm SessionID)
@@ -240,14 +247,22 @@ public class SocketHandler {
 
         server.addEventListener("send_chat_all", GlobalChatPayload.class, (client, data, ack) -> {
             if (data == null || data.getContent() == null || data.getContent().isBlank()) return;
+
             String sender = chatAllUsers.getOrDefault(client.getSessionId(),
                     sessionUsernames.getOrDefault(client.getSessionId(), data.getSender()));
             data.setSender(sender);
             if (data.getCreatedAt() == null) data.setCreatedAt(System.currentTimeMillis());
+
+            // Broadcast tin nhắn tới các client khác trong phòng Chat All
             for (SocketIOClient c : server.getRoomOperations(CHAT_ALL_ROOM).getClients()) {
                 if (!c.getSessionId().equals(client.getSessionId())) {
                     c.sendEvent("chat_all_message", data);
                 }
+            }
+
+            // 🛠️ BỔ SUNG: Gửi phản hồi ACK về cho người gửi để Client đánh dấu "Đã gửi"
+            if (ack != null && ack.isAckRequested()) {
+                ack.sendAckData(Map.of("ok", true));
             }
         });
 
@@ -390,5 +405,11 @@ public class SocketHandler {
         private String type;
         private Object replyTo;
         private Long createdAt;
+    }
+    @Data
+    public static class VoiceViolationPayload {
+        private String roomID;
+        private Integer count;
+        private Integer max;
     }
 }

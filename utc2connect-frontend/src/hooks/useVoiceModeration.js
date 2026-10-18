@@ -10,14 +10,17 @@ import {
 import useLatest from './useLatest';
 
 // Ghi âm giọng nói đối phương theo từng đoạn, gửi lên api.py kiểm duyệt.
-// onToxic(data, speakerName) được gọi khi một đoạn bị đánh dấu vi phạm.
-export default function useVoiceModeration({ onToxic }) {
+// - onToxic(data, speakerName): gọi khi phát hiện vi phạm.
+// - onTranscript(transcript, speakerName, data): gọi khi PhoWhisper bóc băng ra chữ thành công.
+export default function useVoiceModeration({ onToxic, onTranscript }) {
   const voiceRecorderRef = useRef(null);
   const activeRef = useRef(false);
   const chunkBufferRef = useRef([]);
   const audioContextRef = useRef(null);
   const animationFrameRef = useRef(null);
+  
   const onToxicRef = useLatest(onToxic);
+  const onTranscriptRef = useLatest(onTranscript); // 🌟 Thêm Ref cho onTranscript
 
   const stopVoiceModeration = useCallback(() => {
     activeRef.current = false;
@@ -50,22 +53,42 @@ export default function useVoiceModeration({ onToxic }) {
         form.append('mime_type', blob.type || '');
         form.append('client_platform', /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop');
 
+        // 🌟 Bổ sung Header bắt buộc cho Ngrok để tránh bị chặn 0 B
+        const headers = {
+          'ngrok-skip-browser-warning': 'true',
+        };
+        if (aiApiKey) {
+          headers['X-API-Key'] = aiApiKey;
+        }
+
         const res = await fetch(`${aiApiUrl}/moderate-audio`, {
           method: 'POST',
-          headers: aiApiKey ? { 'X-API-Key': aiApiKey } : undefined,
+          headers,
           body: form,
         });
+
         if (!res.ok) {
           console.error('❌ [Kiểm duyệt giọng nói] api.py trả lỗi:', res.status, await res.text().catch(() => ''));
           return;
         }
+
         const data = await res.json();
-        if (data?.is_toxic) onToxicRef.current?.(data, speakerName);
+        console.log('[moderate-audio response]', data);
+        // 🌟 GỬI TRANSCRIPT BÓC BĂNG RA KHUNG CHAT UI
+        if (data?.transcript && data.transcript.trim() !== '') {
+          console.log(`🎙️ [PhoWhisper] ${speakerName}: "${data.transcript}"`);
+          onTranscriptRef.current?.(data.transcript, speakerName, data);
+        }
+
+        // Xử lý khi có vi phạm độc hại
+        if (data?.is_toxic) {
+          onToxicRef.current?.(data, speakerName);
+        }
       } catch (err) {
         console.error('❌ [Kiểm duyệt giọng nói] Không gửi được đoạn ghi âm:', err?.message || err);
       }
     },
-    [onToxicRef]
+    [onToxicRef, onTranscriptRef]
   );
 
   const startVoiceModeration = useCallback(

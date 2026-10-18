@@ -2830,3 +2830,629 @@ input[type="number"] {
   -moz-appearance: textfield !important;
   appearance: textfield !important;
 }
+/* ============================================================================
+   META MOBILE-FIRST RESPONSIVE ENGINE (UTC2 APP)
+   Tối ưu hóa UI/UX toàn bộ hệ thống cho thiết bị iOS & Android
+   ============================================================================ */
+
+/* 1. KHỞI TẠO BIẾN DÙNG CHUNG CHO MOBILE */
+:root {
+  --u2-mobile-nav-height: 60px;
+  --u2-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --u2-safe-top: env(safe-area-inset-top, 0px);
+  --u2-touch-target: 44px;
+}
+
+/* 2. CẢI THIỆN TRẢI NGHIỆM CUỘN CẢM ỨNG TOÀN TRANG */
+@media screen and (max-width: 768px) {
+  html, body {
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: none;
+  }
+
+  /* 3. NAVBAR TRÊN CÙNG: Tối ưu khoảng trống & Thêm Safe Area */
+  .u2-navbar {
+    height: calc(50px + var(--u2-safe-top));
+    padding-top: var(--u2-safe-top);
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .u2-home-layout {
+    padding-top: calc(50px + var(--u2-safe-top));
+    padding-bottom: calc(var(--u2-mobile-nav-height) + var(--u2-safe-bottom));
+  }
+
+  .u2-nav-logo-top {
+    font-size: 16px;
+  }
+
+  /* 4. THANH ĐIỀU HƯỚNG ĐÁY MÀN HÌNH (MOBILE BOTTOM NAVIGATION BAR) */
+  .u2-mobile-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(var(--u2-mobile-nav-height) + var(--u2-safe-bottom));
+    padding-bottom: var(--u2-safe-bottom);
+    background: var(--navy);
+    border-top: 1px solid rgba(255, 253, 246, 0.12);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 999;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
+  }
+
+  .u2-mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    height: 100%;
+    color: rgba(255, 253, 246, 0.6);
+    text-decoration: none;
+    font-size: 10px;
+    font-weight: 600;
+    gap: 3px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.15s ease, transform 0.1s ease;
+  }
+
+  .u2-mobile-nav-item.active {
+    color: var(--amber);
+  }
+
+  .u2-mobile-nav-item .nav-icon {
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  /* 5. VÙNG NỘI DUNG CHÍNH (NEWSFEED) */
+  .u2-main-content {
+    padding: 10px 8px;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .u2-feed {
+    gap: 12px;
+  }
+
+  .u2-card {
+    border-radius: 12px;
+    padding: 12px;
+  }
+
+  /* 6. MODAL & BOTTOM SHEET TỰ ĐỘNG KHI MỞ TRÊN ĐIỆN THOẠI */
+  .u2-report-overlay,
+  .u2-overlay,
+  .u2-drawer-overlay {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+
+  .u2-report-ticket,
+  .u2-detail-modal,
+  .u2-dialog {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 88vh !important;
+    border-radius: 20px 20px 0 0 !important;
+    animation: u2-mobile-sheet-up 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+    padding-bottom: var(--u2-safe-bottom);
+  }
+
+  @keyframes u2-mobile-sheet-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  /* 7. NÂNG CẤP VÙNG CHẠM CẢM ỨNG (TOUCH TARGET ERGONOMICS) */
+  button,
+  .u2-btn,
+  .ctrl-btn,
+  .u2-menu-item,
+  .tc-tab,
+  .tcc-pill {
+    min-height: var(--u2-touch-target);
+    touch-action: manipulation;
+  }
+
+  .u2-logout-btn {
+    min-height: 36px;
+    padding: 6px 12px;
+  }
+
+  /* 8. TỐI ƯU KHUNG VIDEO CALL TRÊN ĐIỆN THOẠI */
+  .u2-main-content.call-mode {
+    padding: 6px !important;
+    gap: 10px !important;
+  }
+
+  .u2-video-container {
+    height: 48vh !important;
+    min-height: 320px !important;
+  }
+
+  .video-controls {
+    padding-bottom: calc(10px + var(--u2-safe-bottom)) !important;
+  }
+
+  .ctrl-btn {
+    padding: 10px 14px !important;
+    font-size: 13px !important;
+  }
+
+  .video-box.local-video {
+    width: 90px !important;
+    height: 125px !important;
+    bottom: 85px !important;
+    right: 8px !important;
+  }
+
+  /* 9. TỐI ƯU CHỢ SINH VIÊN & BỘ LỌC PHÒNG TRỌ (HOUSING & MARKETPLACE) */
+  .u2-chotot-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .u2-filter-panel {
+    width: 100% !important;
+    position: static !important;
+    border-radius: 12px !important;
+    padding: 12px !important;
+  }
+
+  .u2-listing-grid.grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .u2-listing-thumb {
+    height: 130px !important;
+  }
+
+  .u2-listing-body {
+    padding: 10px !important;
+  }
+
+  .u2-listing-price {
+    font-size: 14px !important;
+  }
+
+  .u2-listing-card h3 {
+    font-size: 13px !important;
+  }
+
+  /* 10. PHÒNG CHAT & CONFESSION (TEACHAT / GLOBAL CHAT) */
+  .tc-hub {
+    height: calc(100vh - 50px - var(--u2-safe-top) - var(--u2-mobile-nav-height) - var(--u2-safe-bottom)) !important;
+  }
+
+  .tc-topbar__inner {
+    padding: 8px 12px !important;
+  }
+
+  .tc-tabs {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .tc-tab {
+    flex: 1;
+    padding: 8px 10px !important;
+    font-size: 12px !important;
+    justify-content: center;
+  }
+
+  .tcc-root {
+    grid-template-columns: 1fr !important;
+  }
+
+  .tcc-side, .tcc-online {
+    display: none !important;
+  }
+
+  .tcc-composer {
+    padding-bottom: calc(8px + var(--u2-safe-bottom)) !important;
+  }
+
+  .tcc-input {
+    font-size: 16px !important; /* Ngăn Safari iOS tự động phóng to màn hình khi bấm vào ô nhập */
+  }
+}
+
+/* 11. ĐẶC THÙ CHO MÀN HÌNH SIÊU NHỎ (< 380PX - IPHONE SE / GALAXY A) */
+@media screen and (max-width: 380px) {
+  .u2-listing-grid.grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .ctrl-btn {
+    font-size: 11px !important;
+    padding: 8px 10px !important;
+  }
+}
+/* ==========================================================
+   MOBILE LAYOUT & SCROLL — BẢN GỘP DUY NHẤT (thay cho 2 khối fix cũ)
+   Nguyên tắc:
+   1. Chỉ MỘT khung cuộn duy nhất: chính trang (viewport). Không còn
+      overflow-y:auto lồng nhau trên .u2-page / .u2-main-content.
+   2. Dùng dvh (có fallback vh) để không bị thanh địa chỉ trình duyệt
+      làm sai chiều cao.
+   3. Chiều cao navbar / bottom nav lấy từ biến, mọi nơi dùng chung.
+   4. Trang kiểu app (Trà chanh) khóa vào giữa 2 thanh bằng
+      position:fixed + top/bottom -> luôn vừa khít, không hở, không tràn.
+   ========================================================== */
+:root {
+  --u2-vh: 100vh;
+  --u2-nav-base: 56px;
+  --u2-bottom-base: 60px;
+  --u2-top-h: calc(var(--u2-nav-base) + var(--u2-safe-top, 0px));
+  --u2-bottom-h: calc(var(--u2-bottom-base) + var(--u2-safe-bottom, 0px));
+}
+@supports (height: 100dvh) {
+  :root { --u2-vh: 100dvh; }
+}
+@media (max-width: 767px) {
+  :root { --u2-nav-base: 50px; }
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  :root { --u2-nav-base: 44px; --u2-bottom-base: 52px; }
+}
+
+/* Trang đã đăng nhập */
+.u2-page.logged-in {
+  display: block !important;
+  background: var(--fb-bg) !important;
+  min-height: var(--u2-vh) !important;
+  height: auto !important;
+}
+.u2-page.logged-in::before { display: none !important; }
+
+@media screen and (max-width: 1024px), screen and (max-height: 550px) {
+
+  /* --- Một khung cuộn duy nhất: viewport --- */
+  html {
+    overflow-x: hidden;
+    height: auto !important;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    overflow-x: clip;          /* chặn tràn ngang mà KHÔNG biến body thành khung cuộn */
+    overflow-y: visible !important;
+    height: auto !important;
+    min-height: 100%;
+    position: static !important;
+    overscroll-behavior-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  .u2-page,
+  .u2-home-layout {
+    height: auto !important;
+    min-height: var(--u2-vh) !important;
+    overflow: visible !important;
+    display: block !important;
+    background-attachment: scroll !important; /* 'fixed' gây giật/đứng hình khi cuộn trên mobile */
+  }
+
+  /* --- Navbar trên: cao theo biến, né tai thỏ --- */
+  .u2-navbar {
+    height: var(--u2-top-h) !important;
+    padding-top: var(--u2-safe-top, 0px) !important;
+    box-sizing: border-box;
+  }
+
+  /* chừa navbar + 12px mép sóng, để tiêu đề không bị che khi ở đầu trang */
+  .u2-home-layout {
+    padding-top: calc(var(--u2-top-h) + 12px) !important;
+    padding-bottom: 0 !important;
+  }
+
+  .u2-sidebar,
+  .u2-right-sidebar { display: none !important; }
+
+  /* --- Vùng nội dung: KHÔNG tự cuộn, để trang cuộn; chừa đáy cho bottom nav --- */
+  .u2-main-content {
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    padding: 12px 12px calc(var(--u2-bottom-h) + 24px) !important;
+    box-sizing: border-box !important;
+  }
+
+  /* --- Bottom nav --- */
+  .u2-mobile-bottom-nav {
+    display: flex !important;
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    height: var(--u2-bottom-h);
+    padding-bottom: var(--u2-safe-bottom, 0px);
+    box-sizing: border-box;
+    background: var(--navy);
+    border-top: 1px solid rgba(255, 253, 246, 0.12);
+    justify-content: space-around;
+    align-items: center;
+    z-index: 999;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
+  }
+
+  /* --- Trà chanh (tea-mode): khóa khít giữa navbar và bottom nav --- */
+  .u2-main-content.tea-mode {
+    position: fixed !important;
+    top: var(--u2-top-h);
+    bottom: var(--u2-bottom-h);
+    left: 0; right: 0;
+    width: auto !important;
+    height: auto !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    display: block !important;
+    z-index: 1;
+  }
+  .u2-main-content.tea-mode .tc-hub,
+  .tc-hub {
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+  }
+
+  /* --- Chợ / Trọ tốt: không cho phần tử con làm tràn ngang --- */
+  .u2-chotot-layout > * { min-width: 0; }
+  img, video { max-width: 100%; }
+}
+
+/* ==========================================================
+   HÒ HẸN (video call) — MOBILE DỌC
+   ========================================================== */
+@media screen and (max-width: 900px) and (orientation: portrait) {
+  .u2-main-content.call-mode {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    align-content: start;
+    gap: 12px !important;
+    padding: 8px 8px calc(var(--u2-bottom-h) + 24px) !important;
+    overflow: visible !important;
+  }
+
+  .u2-video-container:not(.fullscreen-mode) {
+    height: clamp(440px, calc(var(--u2-vh) * 0.62), 640px) !important;
+    min-height: 0 !important;
+  }
+
+  /* Ô camera của mình (chế độ PIP): thu nhỏ, nằm góc dưới phải ngay trên thanh điều khiển.
+     CHỈ áp dụng cho PIP — chế độ chia đôi để grid tự chia ô. */
+  .u2-video-container:not(.fullscreen-mode):not(.split-mode):not(.layout-split) .video-box.local-video {
+    width: 72px !important;
+    height: 100px !important;
+    top: auto !important;
+    right: 10px !important;
+    bottom: 92px !important;
+  }
+
+  /* Nút "Chế độ thu nhỏ (PiP)/Chia đôi": gọn lại, không chiếm cả khung */
+  .u2-video-container .layout-toggle-btn {
+    min-height: 34px !important;
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+    top: 10px !important;
+    right: 10px !important;
+  }
+
+  /* Nút phóng to: góc trên trái */
+  .u2-video-container:not(.fullscreen-mode) .fullscreen-toggle-btn {
+    top: 10px !important;
+    bottom: auto !important;
+    left: 10px !important;
+  }
+
+  /* Màn hình chờ (chưa có video): đẩy chữ ra khỏi vùng các nút nổi */
+  .u2-video-container:not(.split-mode):not(.layout-split) .video-box.remote-video:not(:has(video)) {
+    box-sizing: border-box;
+    padding: 56px 12px 120px;
+    text-align: center;
+  }
+
+  /* ===== CHIA ĐÔI TOA: 2 ô xếp dọc, bằng nhau, lấp đầy khung ===== */
+  .u2-video-container.split-mode:not(.fullscreen-mode),
+  .u2-video-container.layout-split:not(.fullscreen-mode) {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) !important;
+    grid-template-areas: "remote" "local" !important;
+    gap: 10px !important;
+    padding: 10px 10px 92px !important;   /* 92px = chừa thanh điều khiển */
+    box-sizing: border-box !important;
+    height: clamp(560px, calc(var(--u2-vh) * 0.78), 780px) !important;
+  }
+  .u2-video-container.split-mode.fullscreen-mode,
+  .u2-video-container.layout-split.fullscreen-mode {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) !important;
+    grid-template-areas: "remote" "local" !important;
+    padding-bottom: 92px !important;
+  }
+  .u2-video-container.split-mode .video-box.remote-video,
+  .u2-video-container.split-mode .video-box.local-video,
+  .u2-video-container.layout-split .video-box.remote-video,
+  .u2-video-container.layout-split .video-box.local-video {
+    position: relative !important;
+    inset: auto !important;
+    top: auto !important; right: auto !important; bottom: auto !important; left: auto !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    border-radius: 14px !important;
+    overflow: hidden;
+  }
+  .u2-video-container.split-mode .video-box.remote-video { grid-area: remote; }
+  .u2-video-container.split-mode .video-box.local-video  { grid-area: local; }
+  .u2-video-container.split-mode .video-box.remote-video:not(:has(video)),
+  .u2-video-container.layout-split .video-box.remote-video:not(:has(video)) {
+    box-sizing: border-box;
+    padding: 52px 12px 12px;
+    text-align: center;
+  }
+
+  /* Khung chat dưới video: cao vừa phải, bên trong tự cuộn */
+  .u2-chat-sidebar {
+    height: clamp(320px, calc(var(--u2-vh) * 0.55), 560px) !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  .chat-messages { min-height: 0 !important; }
+}
+
+/* HÒ HẸN — ĐIỆN THOẠI XOAY NGANG: 2 cột, khóa vừa khít giữa 2 thanh */
+@media screen and (orientation: landscape) and (max-height: 550px) {
+  .u2-main-content.call-mode {
+    grid-template-columns: 1.5fr 1fr !important;
+    height: calc(var(--u2-vh) - var(--u2-top-h) - var(--u2-bottom-h)) !important;
+    padding: 8px !important;
+    overflow: hidden !important;
+  }
+  .u2-video-container:not(.fullscreen-mode),
+  .u2-chat-sidebar {
+    height: 100% !important;
+    min-height: 0 !important;
+  }
+}
+
+/* Desktop: ẩn bottom nav */
+@media screen and (min-width: 1025px) and (min-height: 551px) {
+  .u2-mobile-bottom-nav { display: none !important; }
+}
+
+/* ==========================================================
+   VÉ ĐĂNG NHẬP — nút chính luôn có màu, ô nhập luôn thấy viền
+   ========================================================== */
+.u2-ticket .u2-btn:not(.ghost) {
+  background: var(--amber);
+  color: var(--navy);
+  box-shadow: 0 10px 22px -10px rgba(255, 180, 0, 0.7);
+}
+.u2-ticket .u2-btn:not(.ghost):hover:not(:disabled) { background: var(--amber-dark); }
+.u2-ticket .u2-btn:not(.ghost):disabled {
+  background: var(--amber);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.u2-ticket input:not([type="checkbox"]):not([type="radio"]) {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1.5px solid #D9D6C8;
+  border-radius: 9px;
+  background: #FBFAF4;
+  color: var(--ink);
+  font-size: 16px;            /* >=16px để iOS không tự phóng to */
+  outline: none;
+}
+.u2-ticket input::placeholder { color: #A9A697; }
+.u2-ticket input:focus {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px rgba(255, 180, 0, 0.18);
+}
+/* ==========================================================
+   FIX TRIỆT ĐỂ LANDSCAPE MODE (MÀN HÌNH XOAY NGANG)
+   ========================================================== */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+
+  /* 1. MỞ KHÓA CUỘN CHO TOÀN BỘ TRANG */
+  html, body, .u2-page, .u2-home-layout {
+    height: auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+
+  .u2-main-content,
+  .u2-main-content.call-mode,
+  .u2-main-content.tea-mode {
+    position: static !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow: visible !important;
+    padding-top: 50px !important;
+    padding-bottom: 60px !important;
+  }
+
+  /* 2. ÉP GỌN NAVBAR VÀ BOTTOM NAV ĐỂ TIẾT KIỆM CHIỀU CAO */
+  .u2-navbar {
+    height: 40px !important;
+    padding: 0 12px !important;
+  }
+
+  .u2-mobile-bottom-nav {
+    height: 44px !important;
+    padding-bottom: 0 !important;
+  }
+
+  .u2-mobile-nav-item .nav-icon {
+    font-size: 16px !important;
+  }
+
+  .u2-mobile-nav-item {
+    font-size: 9px !important;
+  }
+
+  /* 3. ẨN CÁC BANNER / KICKER TIÊU ĐỀ TỐN ĐIỆN TÍCH KHI XOAY NGANG */
+  .u2-module-kicker,
+  .u2-module-sub,
+  .u2-module-title {
+    margin-bottom: 4px !important;
+  }
+
+  /* Thu nhỏ chữ tiêu đề để nhường không gian cho dữ liệu */
+  .u2-module-title {
+    font-size: 18px !important;
+  }
+
+  /* 4. FIX LỖI AVATAR BỊ TRÔI OUT NỀN BÊN TRÁI */
+  .video-box.local-video,
+  div[class*="avatar"] {
+    left: auto !important; /* Hủy bỏ position đè lề trái sai quy chuẩn */
+  }
+}
+/* ==========================================================
+   FIX LỖI TRÙNG 2 HÀNG BIỂU TƯỢNG EMOJI PICKER (APP.CSS)
+   ========================================================== */
+
+/* 1. Trả khung header overlay về vị trí tương đối để không sinh ra bản sao dính (sticky) */
+.u2-picker-popup .EmojiPickerReact .epr-header-overlay {
+  display: block !important;
+  position: relative !important;
+  top: 0 !important;
+  box-shadow: none !important;
+}
+
+/* 2. Ép thanh biểu tượng danh mục chính luôn nằm trên 1 hàng duy nhất */
+.u2-picker-popup .EmojiPickerReact .epr-category-nav {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  max-height: 42px !important;
+}
+
+/* 3. Ẩn hoàn toàn thanh biểu tượng danh mục bị clone/lặp lại bên trong body */
+.u2-picker-popup .EmojiPickerReact .epr-body .epr-category-nav,
+.u2-picker-popup .EmojiPickerReact .epr-category-nav ~ .epr-category-nav {
+  display: none !important;
+}
+
+/* 4. Ẩn phần xem trước (preview) và chọn màu da (skin tones) dư thừa */
+.u2-picker-popup .EmojiPickerReact .epr-preview,
+.u2-picker-popup .EmojiPickerReact .epr-skin-tones {
+  display: none !important;
+}

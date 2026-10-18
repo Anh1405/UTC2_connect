@@ -2,10 +2,13 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import EmojiPicker from 'emoji-picker-react';
 import { searchGifs, trendingGifs } from '../../services/giphy';
 import useDebounce from '../../hooks/useDebounce';
+import { CONN } from '../../hooks/usePresence';
 import { generateUUID } from '../../utils/deviceId';
 import { isImeComposing, normalizeChatText } from '../../utils/normalizeText';
+import { analyzeGifIntent, learnGif, personalizeGifs, topicOf } from '../../utils/gifIntent';
 import { UserChip } from '../profile/UserProfileDrawer';
 import './teachat.css';
+import './teachat.extra.css';
 
 /* ==========================================================
    HẰNG SỐ
@@ -13,18 +16,25 @@ import './teachat.css';
 const MAX_LEN = 500; // giới hạn ký tự mỗi tin
 const SEND_COOLDOWN_MS = 700; // chống spam (slow-mode kiểu Discord)
 const MAX_MESSAGES = 300; // giữ tối đa 300 tin trong bộ nhớ
+const HISTORY_KEEP = 100; // số tin lưu lại để F5 không mất khung chat
 const GROUP_GAP_MS = 5 * 60 * 1000; // gộp tin liên tiếp của cùng 1 người
 const TYPING_TTL_MS = 4000;
 const GAME_COOLDOWN_MS = 10 * 60 * 1000; // mỗi người chơi 1 trò / 10 phút
 const GIF_SUGGEST_DELAY_MS = 500;
 const GIF_PAGE = 24;
-
+const ACK_TIMEOUT_MS = 6000; // chờ server xác nhận đã nhận tin
+const RECALL_WINDOW_MS = 5 * 60 * 1000; // chỉ thu hồi được trong 5 phút
+const UNREAD_DIVIDER_MS = 6000; // vạch "Tin nhắn mới" tự biến mất sau 6s khi quay lại tab
+const DRAFT_DELAY_MS = 400;
 
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 const STICKERS = ['🚂', '🍵', '😂', '❤️', '🔥', '🎓', '👍', '🥹', '😭', '💀', '🫡', '📚', '☕', '🍜'];
 
 // Chỉ hiển thị GIF đến từ Giphy để tránh ảnh/tracker lạ do người khác gửi
 const GIPHY_HOST = /^https:\/\/([a-z0-9-]+\.)*giphy\.com\//i;
+
+// Giá trị mặc định khi component được dùng độc lập (không có Hub cấp presence)
+const FALLBACK_PRESENCE = { conn: CONN.ONLINE, online: [], statusOf: () => 'online' };
 
 // Bộ lọc nhanh phía client (đồng bộ với lớp 1 của chuyến tàu ngẫu nhiên)
 const BAD_WORDS = new Set([
@@ -60,97 +70,19 @@ const GAMES = [
   { cmd: '/chon', name: 'Chọn giúp', hint: 'a | b | c (tự gõ lựa chọn)', icon: '🤔', needsArgs: true },
 ];
 
-/* ---------- TỪ KHÓA TIẾNG VIỆT → TỪ KHÓA GIPHY (ưu tiên mục cụ thể ở trên) ---------- */
-const GIF_TOPICS = [
-  ['good night', ['ngủ ngon', 'chúc ngủ ngon', 'good night']],
-  ['good morning', ['chào buổi sáng', 'good morning']],
-  ['oh no', ['toang', 'thôi xong', 'xong phim', 'tiêu rồi', 'xong rồi']],
-  ['shocked', ['sốc', 'trời ơi', 'trời đất', 'hết hồn', 'giật mình', 'xỉu']],
-  ['awkward', ['ngại', 'xấu hổ', 'quê', 'quê quá', 'ngại ngùng']],
-  ['scared', ['sợ', 'run', 'hồi hộp', 'lo quá']],
-  ['sulking', ['dỗi', 'giận dỗi', 'hờn']],
-  ['jealous', ['ghen', 'ghen tị']],
-  ['bored', ['chán quá', 'rảnh', 'nhàm']],
-  ['happy', ['vui', 'vui quá', 'hạnh phúc', 'mừng', 'sướng']],
-  ['cool', ['ngầu', 'chill', 'xịn', 'hay quá']],
-  ['party', ['đi chơi', 'đi nhậu', 'tiệc', 'party', 'đi quẩy']],
-  ['rain', ['mưa', 'trời mưa']],
-  ['hot weather', ['nóng', 'nắng', 'nóng quá']],
-  ['cold weather', ['lạnh', 'rét', 'lạnh quá']],
-  ['snack', ['ăn vặt', 'bánh tráng']],
-  ['lonely', ['cô đơn', 'ế', 'một mình']],
-  ['present here', ['điểm danh', 'có mặt']],
-  ['deadline panic', ['deadline', 'dealine', 'nộp bài', 'sắp deadline']],
-  ['exam stress', ['thi', 'kiểm tra', 'thi cử', 'giữa kỳ', 'cuối kỳ', 'ôn thi']],
-  ['celebrate', ['đậu', 'qua môn', 'điểm cao', '10 điểm']],
-  ['failed', ['trượt', 'rớt môn', 'rớt', 'điểm thấp']],
-  ['studying', ['học bài', 'đi học', 'cày bài', 'ôn bài']],
-  ['broke no money', ['hết tiền', 'nghèo', 'cuối tháng']],
-  ['miss you', ['nhớ', 'nhớ quá', 'nhớ bạn']],
-  ['blushing', ['crush', 'thầm thương', 'ngại quá']],
-  ['thank you', ['cảm ơn', 'cám ơn', 'thanks', 'thank you']],
-  ['congratulations', ['chúc mừng', 'tuyệt vời', 'giỏi quá', 'tung hoa']],
-  ['hello', ['chào', 'xin chào', 'hi', 'hello', 'alo', 'helo', 'hé lô']],
-  ['laughing', ['haha', 'hihi', 'hehe', 'kaka', 'kkk', 'lmao', 'cười', 'mắc cười', 'buồn cười', 'hài', 'hài vậy', 'hai vay', 'bựa', 'lầy', 'troll', 'cười xỉu']],
-  ['crying', ['khóc', 'mít ướt', 'nước mắt']],
-  ['sad', ['buồn', 'chán', 'tủi thân', 'huhu']],
-  ['angry', ['tức', 'giận', 'cáu', 'bực', 'quạu']],
-  ['love', ['yêu', 'thương', 'thả tim', 'iu', 'yêu quá', 'mãi yêu']],
-  ['tired', ['mệt', 'mệt quá', 'kiệt sức']],
-  ['sleepy', ['ngủ', 'buồn ngủ', 'ngáp', 'khò']],
-  ['hungry', ['đói', 'đói quá', 'thèm ăn']],
-  ['eating', ['ăn', 'măm', 'ăn cơm', 'ăn trưa']],
-  ['coffee', ['cà phê', 'cafe', 'trà chanh', 'trà sữa']],
-  ['bus', ['xe buýt', 'xe bus']],
-  ['ok', ['ok', 'oke', 'okie', 'duyệt', 'nhất trí']],
-  ['facepalm', ['bó tay', 'cạn lời', 'bất lực', 'chịu thua']],
-  ['wow', ['wow', 'đỉnh', 'xuất sắc', 'ghê', 'ngạc nhiên', 'đỉnh quá']],
-  ['sorry', ['xin lỗi', 'sorry', 'xl', 'tội lỗi']],
-  ['bye', ['tạm biệt', 'bye', 'bai', 'pp']],
-  ['confused', ['hả', 'ủa', 'là sao', 'what']],
-  ['no', ['không', 'éo', 'đừng', 'no']],
-  ['yes', ['dạ', 'vâng', 'yes', 'chuẩn', 'đúng rồi']],
-  ['dancing', ['quẩy', 'nhảy', 'phiêu', 'lên luôn']],
-];
+/* Từ điển + bộ phân tích ý định GIF nằm trong utils/gifIntent.js */
 const GIF_CHIPS = [
   ['😂 Haha', 'laughing'], ['😭 Buồn', 'sad'], ['😍 Yêu', 'love'], ['🍜 Đói', 'hungry'],
   ['📚 Deadline', 'deadline panic'], ['🎉 Chúc mừng', 'congratulations'], ['😴 Buồn ngủ', 'sleepy'],
 ];
-const HAS_VI = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
-
-const padText = (t) => ` ${t.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim()} `;
-const stripVi = (t) => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
-const LAUGH_RE = /^(ha|hi|he|ho|hê|ka){2,}h?$|^k{3,}$/i;
-const topicOf = (text) => {
-  const padded = padText(text);
-  let hit = GIF_TOPICS.find(([, words]) => words.some((w) => padded.includes(` ${w} `)));
-  if (hit) return hit[0];
-  if (padded.trim().split(' ').some((tk) => LAUGH_RE.test(tk))) return 'laughing';
-  // gõ không dấu: "buon", "doi", "thi cu"... (chỉ so với từ khóa dài >= 4 ký tự để tránh nhầm)
-  const plain = ` ${stripVi(padded).trim()} `;
-  hit = GIF_TOPICS.find(([, words]) =>
-    words.some((w) => {
-      const pw = stripVi(w);
-      return pw.length >= 4 && plain.includes(` ${pw} `);
-    })
-  );
-  return hit ? hit[0] : null;
-};
-/** Từ khóa gợi ý GIF khi đang gõ; '' = không gợi ý */
-const buildSuggestQuery = (text) => {
-  const t = text.trim();
-  if (t.length < 2 || t.length > 140 || /^[/@]/.test(t) || /https?:\/\//i.test(t)) return '';
-  const topic = topicOf(t);
-  if (topic) return topic;
-  if (HAS_VI.test(t)) {
-    // Tiếng Việt không khớp từ điển: gợi ý GIF phản ứng chung theo dấu câu
-    if (t.length < 3) return '';
-    if (/\?\s*$/.test(t)) return 'confused';
-    if (/!\s*$/.test(t)) return 'excited';
-    return 'reaction';
+/** 3 tin nhắn chữ gần nhất của người khác (làm bối cảnh cho gợi ý GIF) */
+const recentOthersText = (list, me) => {
+  const out = [];
+  for (let i = list.length - 1; i >= 0 && out.length < 3; i -= 1) {
+    const m = list[i];
+    if (m.type === 'text' && m.content && !(m.me || m.sender === me)) out.unshift(String(m.content));
   }
-  const tail = t.split(/\s+/).slice(-4).join(' ');
-  return tail.length >= 3 ? tail.slice(0, 40) : '';
+  return out;
 };
 const toThumb = (g) => {
   const url = g?.images?.fixed_height?.url || g?.images?.original?.url;
@@ -222,20 +154,73 @@ const colorOf = (name = '') => {
 };
 const initialOf = (name) => (name ? name.charAt(0).toUpperCase() : '?');
 const previewOf = (m) => {
+  if (m.deleted) return '🚫 Tin nhắn đã thu hồi';
   if (m.type === 'gif') return '🖼️ GIF';
   if (m.type === 'sticker') return m.content;
   return String(m.content || '').slice(0, 90);
 };
 
+/* ---------- Lưu cục bộ: lịch sử khung chat + bản nháp (theo tài khoản) ---------- */
+const historyKey = (me) => `tc_chat_history_${me}`;
+const draftKey = (me) => `tc_chat_draft_${me}`;
+
+const loadHistory = (me) => {
+  if (!me) return [];
+  try {
+    const arr = JSON.parse(sessionStorage.getItem(historyKey(me)) || '[]');
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter((m) => m && typeof m.id === 'string' && m.createdAt)
+      // tin đang "gửi" lúc F5 thì không biết kết quả → đánh dấu lỗi để người dùng chủ động gửi lại
+      .map((m) => (m.status === 'sending' ? { ...m, status: 'failed' } : m));
+  } catch {
+    return [];
+  }
+};
+const saveHistory = (me, list) => {
+  if (!me) return;
+  try {
+    const keep = list.filter((m) => m.type !== 'system').slice(-HISTORY_KEEP);
+    sessionStorage.setItem(historyKey(me), JSON.stringify(keep));
+  } catch {
+    /* hết dung lượng / chế độ riêng tư – bỏ qua */
+  }
+};
+const loadDraft = (me) => {
+  try {
+    return localStorage.getItem(draftKey(me)) || '';
+  } catch {
+    return '';
+  }
+};
+const saveDraft = (me, text) => {
+  try {
+    if (text) localStorage.setItem(draftKey(me), text);
+    else localStorage.removeItem(draftKey(me));
+  } catch {
+    /* bỏ qua */
+  }
+};
+
+const STATUS_TEXT = { online: 'Đang hoạt động', away: 'Vắng mặt' };
+
 /* ==========================================================
    COMPONENT CHÍNH
    ========================================================== */
-export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
+export default function GlobalChatRoom({
+  socket,
+  currentUser,
+  onOpenProfile,
+  presence = FALLBACK_PRESENCE,
+  active = true,
+  onUnreadChange,
+}) {
   const me = typeof currentUser === 'string' ? currentUser : currentUser?.username || '';
+  const { conn, online: uniqueOnline, statusOf } = presence;
+  const connOk = conn === CONN.ONLINE;
 
-  const [messages, setMessages] = useState([]);
-  const [online, setOnline] = useState([]);
-  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState(() => loadHistory(me));
+  const [input, setInput] = useState(() => loadDraft(me));
   const [replyTo, setReplyTo] = useState(null);
   const [panel, setPanel] = useState(null); // null | 'emoji' | 'gif' | 'games'
   const [gameLast, setGameLast] = useState(0);
@@ -271,9 +256,12 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
   const [activeMsg, setActiveMsg] = useState(null);
   const [mention, setMention] = useState(null); // { query, start }
   const [mentionIdx, setMentionIdx] = useState(0);
+  const [unread, setUnread] = useState(0); // số tin đến khi đang ở tab khác
+  const [unreadFromId, setUnreadFromId] = useState(null); // tin đầu tiên chưa đọc → đặt vạch ngăn
 
   const scroller = useRef(null);
   const inputRef = useRef(null);
+  const searchRef = useRef(null);
   const composerRef = useRef(null);
   const atBottomRef = useRef(true);
   const lastIdRef = useRef(null);
@@ -281,8 +269,11 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
   const typingSentRef = useRef(0);
   const typingStopRef = useRef(null);
   const noticeTimer = useRef(null);
+  const unreadTimer = useRef(null);
   const prevOnlineRef = useRef(null);
+  const prevConnRef = useRef(conn);
   const soundOnRef = useRef(soundOn);
+  const activeRef = useRef(active);
   const audioCtxRef = useRef(null);
   const baseTitleRef = useRef('');
   const unreadTitleRef = useRef(0);
@@ -290,6 +281,7 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
   const gifReqRef = useRef(0);
 
   soundOnRef.current = soundOn;
+  activeRef.current = active;
 
   /* ---------- helpers ---------- */
   const flash = useCallback((text) => {
@@ -322,6 +314,10 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
     }
   }, []);
 
+  const patchMessage = useCallback((id, patch) => {
+    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)));
+  }, []);
+
   const applyReaction = useCallback((id, emoji, user, action) => {
     setMessages((prev) =>
       prev.map((m) => {
@@ -344,10 +340,11 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
     setNewCount(0);
   }, []);
 
-  /* ---------- SOCKET ---------- */
+  /* ---------- SOCKET: tin nhắn, đang gõ, cảm xúc, thu hồi ----------
+     Việc khai báo "trực tuyến" đã chuyển lên Hub (usePresence) nên ở đây
+     KHÔNG còn emit join/leave nữa → đổi tab hay mở lại tab không làm mất trạng thái online. */
   useEffect(() => {
     if (!socket) return undefined;
-    socket.emit('join_chat_all', currentUser);
 
     const onMsg = (data) => {
       if (!data) return;
@@ -362,23 +359,19 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
 
       if (msg.sender === me) return;
       const mentioned = msg.type === 'text' && me && String(msg.content).toLowerCase().includes(`@${me.toLowerCase()}`);
-      if (!atBottomRef.current) setNewCount((c) => c + 1);
+
+      if (!activeRef.current) {
+        // đang ở tab Confession: đếm tin chưa đọc + đánh dấu điểm bắt đầu chưa đọc
+        setUnread((c) => c + 1);
+        setUnreadFromId((cur) => cur || msg.id);
+      } else if (!atBottomRef.current) {
+        setNewCount((c) => c + 1);
+      }
       if (document.hidden) {
         unreadTitleRef.current += 1;
         document.title = `(${unreadTitleRef.current}) ${baseTitleRef.current}`;
       }
-      if (soundOnRef.current && (document.hidden || mentioned)) beep();
-    };
-
-    const onPresence = (data) => {
-      const list = [...new Set((data?.online || []).filter(Boolean))];
-      const prev = prevOnlineRef.current;
-      if (prev) {
-        const joined = list.filter((u) => !prev.includes(u) && u !== me);
-        if (joined.length > 0 && joined.length <= 2) pushSystem(`🚂 ${joined.join(', ')} vừa lên tàu`);
-      }
-      prevOnlineRef.current = list;
-      setOnline(list);
+      if (soundOnRef.current && (document.hidden || !activeRef.current || mentioned)) beep();
     };
 
     const onTyping = (data) => {
@@ -396,20 +389,51 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
       applyReaction(data.messageId, data.emoji, data.user, data.action === 'remove' ? 'remove' : 'add');
     };
 
+    // Thu hồi: chỉ chấp nhận khi đúng người gửi gốc (chống giả mạo ở phía client)
+    const onDelete = (data) => {
+      if (!data?.messageId) return;
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === data.messageId && m.sender === data.user
+            ? { ...m, deleted: true, type: 'text', content: '', reactions: {} }
+            : m
+        )
+      );
+    };
+
     socket.on('chat_all_message', onMsg);
-    socket.on('chat_all_presence', onPresence);
     socket.on('chat_all_typing', onTyping);
     socket.on('chat_all_reaction', onReaction);
+    socket.on('chat_all_delete', onDelete);
 
     return () => {
-      socket.emit('leave_chat_all', currentUser);
       socket.off('chat_all_message', onMsg);
-      socket.off('chat_all_presence', onPresence);
       socket.off('chat_all_typing', onTyping);
       socket.off('chat_all_reaction', onReaction);
-      prevOnlineRef.current = null;
+      socket.off('chat_all_delete', onDelete);
     };
-  }, [socket, currentUser, me, beep, pushSystem, applyReaction]);
+  }, [socket, me, beep, applyReaction]);
+
+  /* ---------- Thông báo hệ thống: ai vừa lên tàu (suy ra từ danh sách online của Hub) ---------- */
+  const onlineKey = uniqueOnline.join('\u0001');
+  useEffect(() => {
+    const list = onlineKey ? onlineKey.split('\u0001') : [];
+    const prev = prevOnlineRef.current;
+    if (prev && conn === CONN.ONLINE) {
+      const joined = list.filter((u) => !prev.includes(u) && u !== me);
+      if (joined.length > 0 && joined.length <= 2) pushSystem(`🚂 ${joined.join(', ')} vừa lên tàu`);
+    }
+    prevOnlineRef.current = list;
+  }, [onlineKey, conn, me, pushSystem]);
+
+  /* ---------- Thông báo khi mất / nối lại kết nối ---------- */
+  useEffect(() => {
+    const was = prevConnRef.current;
+    prevConnRef.current = conn;
+    if (was === conn) return;
+    if (conn === CONN.ONLINE && was !== CONN.CONNECTING) pushSystem('✅ Đã kết nối lại với Ga');
+    if ((conn === CONN.RECONNECTING || conn === CONN.OFFLINE) && was === CONN.ONLINE) pushSystem('⚠️ Mất kết nối, đang thử lại...');
+  }, [conn, pushSystem]);
 
   /* ---------- Dọn "đang gõ" quá hạn ---------- */
   useEffect(() => {
@@ -425,7 +449,17 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
     return () => clearInterval(t);
   }, []);
 
-  /* ---------- Badge tiêu đề tab khi có tin mới lúc ẩn tab ---------- */
+  /* ---------- Dọn timer khi rời trang ---------- */
+  useEffect(
+    () => () => {
+      clearTimeout(noticeTimer.current);
+      clearTimeout(typingStopRef.current);
+      clearTimeout(unreadTimer.current);
+    },
+    []
+  );
+
+  /* ---------- Badge tiêu đề tab trình duyệt khi có tin mới lúc ẩn tab ---------- */
   useEffect(() => {
     baseTitleRef.current = document.title;
     const onVisible = () => {
@@ -440,6 +474,47 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
       document.title = baseTitleRef.current;
     };
   }, []);
+
+  /* ---------- Báo số tin chưa đọc lên Hub (badge trên tab) + xử lý khi quay lại tab Chat ---------- */
+  useEffect(() => {
+    onUnreadChange?.(active ? 0 : unread);
+  }, [active, unread, onUnreadChange]);
+
+  useEffect(() => {
+    if (!active) return undefined;
+    setUnread(0);
+    // phần tử bị display:none sẽ mất vị trí cuộn → đưa về cuối nếu trước đó đang ở cuối
+    if (atBottomRef.current) requestAnimationFrame(() => scrollToBottom(false));
+    clearTimeout(unreadTimer.current);
+    unreadTimer.current = setTimeout(() => setUnreadFromId(null), UNREAD_DIVIDER_MS);
+    return () => clearTimeout(unreadTimer.current);
+  }, [active, scrollToBottom]);
+
+  /* ---------- Lưu lịch sử khung chat (chống mất khi F5) ---------- */
+  useEffect(() => {
+    const t = setTimeout(() => saveHistory(me, messages), 400);
+    return () => clearTimeout(t);
+  }, [messages, me]);
+
+  /* ---------- Lưu bản nháp đang gõ dở ---------- */
+  const draftDebounced = useDebounce(input, DRAFT_DELAY_MS);
+  useEffect(() => {
+    saveDraft(me, draftDebounced);
+  }, [draftDebounced, me]);
+
+  /* ---------- Phím tắt: Ctrl/Cmd + K mở tìm kiếm (chỉ khi tab Chat đang hiện) ---------- */
+  useEffect(() => {
+    if (!active) return undefined;
+    const onKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+        requestAnimationFrame(() => searchRef.current?.focus());
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [active]);
 
   /* ---------- Đóng popup khi bấm ra ngoài ---------- */
   useEffect(() => {
@@ -504,34 +579,41 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
   /* ---------- GỢI Ý GIF THEO NỘI DUNG ĐANG GÕ (kiểu TikTok) ---------- */
   const debouncedInput = useDebounce(input, GIF_SUGGEST_DELAY_MS);
   const mentionActive = Boolean(mention);
+  // 3 tin gần nhất của người khác → để "đồng cảm" khi mình trả lời cụt ("ừ", "vậy hả"...)
+  const gifContextRef = useRef([]);
+  gifContextRef.current = recentOthersText(messages, me);
   useEffect(() => {
-    const q = suggestOn && !panel && !mentionActive ? buildSuggestQuery(debouncedInput) : '';
+    const intent =
+      suggestOn && active && !panel && !mentionActive
+        ? analyzeGifIntent(debouncedInput, { context: gifContextRef.current })
+        : null;
+    const q = intent?.query || '';
     if (!q) {
       setSuggest((s) => (s.q || s.items.length ? { q: '', items: [], loading: false } : s));
       return undefined;
     }
     const cached = gifCacheRef.current.get(q);
     if (cached) {
-      setSuggest({ q, items: cached, loading: false });
+      setSuggest({ q, intent, items: personalizeGifs(intent.topic, cached), loading: false });
       return undefined;
     }
     let cancelled = false;
-    setSuggest({ q, items: [], loading: true });
+    setSuggest({ q, intent, items: [], loading: true });
     searchGifs(q, { offset: 0, limit: 12 })
       .then((res) => {
         if (cancelled) return;
         const items = res.data.map(toThumb).filter(Boolean);
         gifCacheRef.current.set(q, items);
-        setSuggest({ q, items, loading: false });
+        setSuggest({ q, intent, items: personalizeGifs(intent.topic, items), loading: false });
       })
       .catch((err) => {
         console.error('❌ [GIF gợi ý] Giphy lỗi:', err?.message || err);
-        if (!cancelled) setSuggest({ q, items: [], loading: false, error: true });
+        if (!cancelled) setSuggest({ q, intent, items: [], loading: false, error: true });
       });
     return () => {
       cancelled = true;
     };
-  }, [debouncedInput, suggestOn, panel, mentionActive]);
+  }, [debouncedInput, suggestOn, active, panel, mentionActive]);
 
   /* ---------- BỘ CHỌN GIF ---------- */
   const debGifQuery = useDebounce(gifQuery, 450);
@@ -563,15 +645,25 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
   }, [panel, debGifQuery, loadGifs]);
 
   /* ---------- Dữ liệu dẫn xuất ---------- */
-  const uniqueOnline = useMemo(() => [...new Set(online.filter(Boolean))], [online]);
-
   const view = useMemo(() => {
     if (!searchActive) return messages;
     const q = search.trim().toLowerCase();
     return messages.filter(
-      (m) => m.type !== 'system' && (String(m.content).toLowerCase().includes(q) || String(m.sender).toLowerCase().includes(q))
+      (m) =>
+        m.type !== 'system' &&
+        !m.deleted &&
+        (String(m.content).toLowerCase().includes(q) || String(m.sender).toLowerCase().includes(q))
     );
   }, [messages, search, searchActive]);
+
+  // Tin cuối cùng của mình → chỉ hiện "Đã gửi" ở đó (giống Messenger)
+  const lastMineId = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      const m = messages[i];
+      if ((m.me || m.sender === me) && m.type !== 'system' && m.type !== 'game') return m.id;
+    }
+    return null;
+  }, [messages, me]);
 
   // Regex nhận diện link + @tên (dùng tên đang online và người đã nhắn)
   const richRe = useMemo(() => {
@@ -642,11 +734,65 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
     }
   };
 
+  /**
+   * Gửi payload lên server kèm xác nhận (ack) – giống cơ chế "đã gửi / gửi lỗi" của Messenger, Zalo.
+   * - Server mới: trả ack { ok: true } / { ok: false, error } → đổi trạng thái chính xác.
+   * - Server cũ (không ack): hết thời gian chờ nhưng socket vẫn nối → coi như đã gửi.
+   * - Mất kết nối giữa chừng → "failed" để người dùng bấm gửi lại.
+   */
+  const deliver = useCallback(
+  (payload) => {
+    if (!socket || !socket.connected) return false;
+
+    // Nếu socket.io-client có hỗ trợ .timeout() (phiên bản v4.4.0+)
+    if (typeof socket.timeout === 'function') {
+      socket.timeout(ACK_TIMEOUT_MS).emit('send_chat_all', payload, (err, res) => {
+        if (err) {
+          patchMessage(payload.id, { status: socket.connected ? 'sent' : 'failed' });
+          return;
+        }
+        if (res && res.ok === false) {
+          patchMessage(payload.id, { status: 'failed', error: res.error || 'Máy chủ từ chối tin nhắn' });
+          flash(res.error || 'Máy chủ từ chối tin nhắn');
+          return;
+        }
+        patchMessage(payload.id, { status: 'sent', error: undefined });
+      });
+    } else {
+      // Fallback tự đếm timeout cho các phiên bản socket.io-client cũ
+      let acked = false;
+      const timer = setTimeout(() => {
+        if (!acked) {
+          patchMessage(payload.id, { status: socket.connected ? 'sent' : 'failed' });
+        }
+      }, ACK_TIMEOUT_MS);
+
+      socket.emit('send_chat_all', payload, (res) => {
+        acked = true;
+        clearTimeout(timer);
+        if (res && res.ok === false) {
+          patchMessage(payload.id, { status: 'failed', error: res.error || 'Máy chủ từ chối tin nhắn' });
+          flash(res.error || 'Máy chủ từ chối tin nhắn');
+          return;
+        }
+        patchMessage(payload.id, { status: 'sent', error: undefined });
+      });
+    }
+    return true;
+  },
+  [socket, patchMessage, flash]
+);
+
   /** Trả về true nếu tin đã được gửi đi */
   const send = (rawContent, type = 'text', opts = {}) => {
     if (!socket) return false;
     const content = type === 'text' ? normalizeChatText(rawContent) : rawContent;
     if (!content) return false;
+
+    if (!connOk || !socket.connected) {
+      flash('📡 Chưa kết nối tới máy chủ, thử lại sau giây lát nhé');
+      return false;
+    }
 
     const now = Date.now();
     if (now - lastSentRef.current < SEND_COOLDOWN_MS) {
@@ -666,8 +812,9 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
 
     lastSentRef.current = now;
     const payload = { id: generateUUID(), sender: me, content, type, replyTo, createdAt: now };
-    socket.emit('send_chat_all', payload);
-    setMessages((prev) => capMessages([...prev, { ...payload, me: true }]));
+    // hiện ngay (optimistic UI) với trạng thái "đang gửi", chờ ack để chốt
+    setMessages((prev) => capMessages([...prev, { ...payload, me: true, status: 'sending' }]));
+    deliver(payload);
     setPanel(null);
     if (!opts.keepInput) {
       setInput('');
@@ -678,6 +825,35 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
     return true;
   };
 
+  /** Gửi lại tin bị lỗi (giữ nguyên id nên server/máy khác không bị trùng) */
+  const retry = (m) => {
+    if (!connOk || !socket?.connected) {
+      flash('📡 Chưa có kết nối, chưa thể gửi lại');
+      return;
+    }
+    const { me: _me, status: _status, error: _error, reactions: _reactions, ...payload } = m;
+    patchMessage(m.id, { status: 'sending', error: undefined });
+    deliver(payload);
+  };
+
+  const canRecall = (m) =>
+    (m.me || m.sender === me) &&
+    !m.deleted &&
+    m.status !== 'failed' &&
+    m.status !== 'sending' &&
+    (m.type === 'text' || m.type === 'gif' || m.type === 'sticker') &&
+    Date.now() - m.createdAt < RECALL_WINDOW_MS;
+
+  const recall = (m) => {
+    if (!canRecall(m)) {
+      flash('Chỉ thu hồi được tin của bạn trong vòng 5 phút');
+      return;
+    }
+    socket?.emit('chat_all_delete', { messageId: m.id, user: me });
+    patchMessage(m.id, { deleted: true, type: 'text', content: '', reactions: {} });
+    setActiveMsg(null);
+  };
+
   const handleCommand = (text) => {
     const res = runCommand(text, me);
     if (res.help) {
@@ -685,7 +861,7 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
         [
           'Trò chơi của Ga Trà Chanh (mỗi người 1 lần / 10 phút):',
           ...GAMES.map((g) => `${g.icon} ${g.cmd} – ${g.hint}`),
-          '💡 Gõ @tên để nhắc ai đó',
+          '💡 Gõ @tên để nhắc ai đó • Ctrl+K để tìm tin nhắn',
         ].join('\n')
       );
       setInput('');
@@ -722,7 +898,9 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
 
   /** GIF chọn từ gợi ý: gửi ngay, giữ nguyên chữ đang gõ (như TikTok) */
   const sendGif = (g, opts = {}) => {
-    if (g?.url) send(g.url, 'gif', opts);
+    if (!g?.url) return;
+    const { topic, ...sendOpts } = opts;
+    if (send(g.url, 'gif', sendOpts)) learnGif(topic, g); // nhớ gu GIF theo từng tâm trạng
   };
 
   const insertEmoji = (emoji) => {
@@ -769,7 +947,7 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
       setMention(null);
     }
 
-    if (value.trim() && socket) {
+    if (value.trim() && socket?.connected) {
       const now = Date.now();
       if (now - typingSentRef.current > 2000) {
         socket.emit('chat_all_typing', { user: me, typing: true });
@@ -812,6 +990,7 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
   };
 
   const toggleReaction = (m, emoji) => {
+    if (m.deleted) return;
     const has = (m.reactions?.[emoji] || []).includes(me);
     const action = has ? 'remove' : 'add';
     applyReaction(m.id, emoji, me, action);
@@ -864,6 +1043,12 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
         <span>{dayLabel(m.createdAt)}</span>
       </div>
     ) : null;
+    const unreadDivider =
+      !searchActive && unreadFromId === m.id ? (
+        <div className="tcc-unread" role="separator">
+          <span>Tin nhắn mới</span>
+        </div>
+      ) : null;
 
     if (m.type === 'system') {
       return (
@@ -878,6 +1063,7 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
       return (
         <Fragment key={m.id}>
           {dayDivider}
+          {unreadDivider}
           <div id={`msg-${m.id}`} className="tcc-game">
             {m.content}
             <time>{timeOf(m.createdAt)}</time>
@@ -894,20 +1080,24 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
       prev.type !== 'game' &&
       prev.sender === m.sender &&
       !m.replyTo &&
+      !unreadDivider &&
       m.createdAt - prev.createdAt < GROUP_GAP_MS;
-    const mentioned = m.type === 'text' && !mine && me && String(m.content).toLowerCase().includes(`@${me.toLowerCase()}`);
+    const mentioned =
+      !m.deleted && m.type === 'text' && !mine && me && String(m.content).toLowerCase().includes(`@${me.toLowerCase()}`);
     const reactions = Object.entries(m.reactions || {});
     const isGif = m.type === 'gif' && GIPHY_HOST.test(String(m.content));
 
     let body;
-    if (m.type === 'sticker') {
+    if (m.deleted) {
+      body = <div className="tcc-bubble tcc-bubble--deleted">🚫 Tin nhắn đã được thu hồi</div>;
+    } else if (m.type === 'sticker') {
       body = <span className="tcc-sticker">{m.content}</span>;
     } else if (isGif) {
       body = <img className="tcc-gif" src={m.content} alt="GIF" loading="lazy" />;
     } else {
       body = (
         <div
-          className={`tcc-bubble ${mine ? 'tcc-bubble--me' : 'tcc-bubble--other'}`}
+          className={`tcc-bubble ${mine ? 'tcc-bubble--me' : 'tcc-bubble--other'} ${m.status === 'failed' ? 'tcc-bubble--failed' : ''} ${m.status === 'sending' ? 'tcc-bubble--sending' : ''}`}
           title={timeOf(m.createdAt)}
           onClick={() => setActiveMsg((cur) => (cur === m.id ? null : m.id))}
         >
@@ -916,9 +1106,28 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
       );
     }
 
+    // dòng trạng thái gửi (chỉ cho tin của mình)
+    let statusLine = null;
+    if (mine && !m.deleted) {
+      if (m.status === 'sending') statusLine = <span className="tcc-status-line">Đang gửi...</span>;
+      else if (m.status === 'failed') {
+        statusLine = (
+          <span className="tcc-status-line tcc-status-line--err">
+            {m.error || 'Gửi không thành công'} ·{' '}
+            <button type="button" className="tcc-retry" onClick={() => retry(m)}>
+              Gửi lại
+            </button>
+          </span>
+        );
+      } else if (m.id === lastMineId && m.status === 'sent') {
+        statusLine = <span className="tcc-status-line">✓ Đã gửi · {timeOf(m.createdAt)}</span>;
+      }
+    }
+
     return (
       <Fragment key={m.id}>
         {dayDivider}
+        {unreadDivider}
         <div
           id={`msg-${m.id}`}
           className={[
@@ -953,7 +1162,7 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
               </span>
             )}
 
-            {m.replyTo && (
+            {m.replyTo && !m.deleted && (
               <button type="button" className="tcc-quote" onClick={() => jumpTo(m.replyTo.id)}>
                 <b>↩ {m.replyTo.sender}</b>
                 {m.replyTo.content}
@@ -962,22 +1171,29 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
 
             <div className="tcc-line">
               {body}
-              <div className="tcc-tools">
-                {QUICK_REACTIONS.map((emo) => (
-                  <button key={emo} type="button" className="tcc-tool" onClick={() => toggleReaction(m, emo)} aria-label={`Thả ${emo}`}>
-                    {emo}
+              {!m.deleted && (
+                <div className="tcc-tools">
+                  {QUICK_REACTIONS.map((emo) => (
+                    <button key={emo} type="button" className="tcc-tool" onClick={() => toggleReaction(m, emo)} aria-label={`Thả ${emo}`}>
+                      {emo}
+                    </button>
+                  ))}
+                  <span className="tcc-tools__sep" />
+                  <button type="button" className="tcc-tool tcc-tool--txt" onClick={() => startReply(m)}>
+                    ↩ Trả lời
                   </button>
-                ))}
-                <span className="tcc-tools__sep" />
-                <button type="button" className="tcc-tool tcc-tool--txt" onClick={() => startReply(m)}>
-                  ↩ Trả lời
-                </button>
-                {m.type === 'text' && (
-                  <button type="button" className="tcc-tool" onClick={() => copyText(m)} aria-label="Sao chép" title="Sao chép">
-                    📋
-                  </button>
-                )}
-              </div>
+                  {m.type === 'text' && (
+                    <button type="button" className="tcc-tool" onClick={() => copyText(m)} aria-label="Sao chép" title="Sao chép">
+                      📋
+                    </button>
+                  )}
+                  {canRecall(m) && (
+                    <button type="button" className="tcc-tool" onClick={() => recall(m)} aria-label="Thu hồi" title="Thu hồi (trong 5 phút)">
+                      🗑️
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             {reactions.length > 0 && (
@@ -995,6 +1211,8 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
                 ))}
               </div>
             )}
+
+            {statusLine}
           </div>
         </div>
       </Fragment>
@@ -1004,25 +1222,34 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
   /* ==========================================================
      GIAO DIỆN
      ========================================================== */
+  const placeholder = connOk
+    ? 'Nhập tin nhắn, gõ @ để nhắc bạn, gõ / để chơi trò chơi...'
+    : 'Đang kết nối lại... bạn vẫn có thể soạn tin';
+
   return (
     <div className="tcc-root">
       {/* ================= CỘT 1: ONLINE ================= */}
-      <aside className="tcc-online">
+      <aside className="tcc-online" aria-label="Danh sách trực tuyến">
         <div className="tcc-online__head">
-          <span className="tcc-dot" />
-          Trực tuyến ({uniqueOnline.length})
+          <span className={`tcc-dot ${connOk ? '' : 'tcc-dot--off'}`} />
+          {connOk ? `Trực tuyến (${uniqueOnline.length})` : 'Đang kết nối...'}
         </div>
         <div className="tcc-online__list">
-          {uniqueOnline.map((u) => (
-            <div key={u} className="tcc-online__item">
-              <UserChip username={u} onOpen={onOpenProfile} />
-              {u !== me && (
-                <button type="button" className="tcc-at-btn" onClick={() => mentionUser(u)} title={`Nhắc ${u}`}>
-                  @
-                </button>
-              )}
-            </div>
-          ))}
+          {uniqueOnline.map((u) => {
+            const st = statusOf(u);
+            return (
+              <div key={u} className="tcc-online__item" title={`${u} • ${STATUS_TEXT[st] || STATUS_TEXT.online}`}>
+                <span className={`tcc-presence tcc-presence--${st}`} aria-label={STATUS_TEXT[st] || STATUS_TEXT.online} />
+                <UserChip username={u} onOpen={onOpenProfile} />
+                {u === me && <span className="tcc-you">Bạn</span>}
+                {u !== me && (
+                  <button type="button" className="tcc-at-btn" onClick={() => mentionUser(u)} title={`Nhắc ${u}`}>
+                    @
+                  </button>
+                )}
+              </div>
+            );
+          })}
           {uniqueOnline.length === 0 && (
             <div className="tcc-empty">
               <span>📡</span>
@@ -1043,9 +1270,10 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
           <span className="tcc-head__space" />
           {searchOpen && (
             <input
+              ref={searchRef}
               autoFocus
               className="tcc-search"
-              placeholder="Tìm tin nhắn..."
+              placeholder="Tìm tin nhắn... (Ctrl+K)"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => e.key === 'Escape' && (setSearchOpen(false), setSearch(''))}
@@ -1058,7 +1286,7 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
               setSearchOpen((v) => !v);
               setSearch('');
             }}
-            title="Tìm tin nhắn"
+            title="Tìm tin nhắn (Ctrl+K)"
             aria-label="Tìm tin nhắn"
           >
             🔍
@@ -1068,7 +1296,7 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
           </button>
         </header>
 
-        <div className="tcc-scroll" ref={scroller} onScroll={onScroll}>
+        <div className="tcc-scroll" ref={scroller} onScroll={onScroll} role="log" aria-live="polite" aria-relevant="additions">
           <div className="tcc-welcome">
             <span>Chào mừng bạn đến với Ga tán gẫu UTC2 👋</span>
           </div>
@@ -1177,16 +1405,22 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
           {showSuggest && (
             <div className="tcc-suggest">
               <div className="tcc-suggest__head">
-                <span>✨ GIF gợi ý cho "{suggest.q}"</span>
+                <span>{suggest.intent?.headline ? `✨ ${suggest.intent.headline}` : `✨ GIF gợi ý cho "${suggest.q}"`}</span>
                 <button type="button" onClick={() => setSuggestDismissed(debouncedInput)} aria-label="Đóng gợi ý GIF">
                   ✕
                 </button>
               </div>
               <div className="tcc-suggest__row">
-                {suggest.loading && <span className="tcc-suggest__hint">Đang tìm GIF...</span>}
+                {suggest.loading && <span className="tcc-suggest__hint">Đang chọn GIF hợp tâm trạng...</span>}
                 {suggest.error && <span className="tcc-suggest__hint">Không tải được GIF gợi ý, mở Console (F12) để xem lỗi.</span>}
                 {suggest.items.map((g) => (
-                  <button key={g.id} type="button" className="tcc-suggest__item" onClick={() => sendGif(g, { keepInput: true })} title="Bấm để gửi GIF này">
+                  <button
+                    key={g.id}
+                    type="button"
+                    className={`tcc-suggest__item${g.fav ? ' tcc-suggest__item--fav' : ''}`}
+                    onClick={() => sendGif(g, { keepInput: true, topic: suggest.intent?.topic })}
+                    title={g.fav ? 'GIF bạn hay dùng — bấm để gửi' : 'Bấm để gửi GIF này'}
+                  >
                     <img src={g.preview} alt={g.title} loading="lazy" />
                   </button>
                 ))}
@@ -1263,18 +1497,19 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
             <input
               ref={inputRef}
               className="tcc-input"
-              placeholder="Nhập tin nhắn, gõ @ để nhắc bạn, gõ / để chơi trò chơi..."
+              placeholder={placeholder}
               value={input}
               maxLength={MAX_LEN + 50}
               onChange={onInputChange}
               onKeyDown={onInputKeyDown}
+              aria-label="Nhập tin nhắn"
             />
             {input.length > MAX_LEN - 100 && (
               <span className={`tcc-count ${input.length > MAX_LEN ? 'tcc-count--warn' : ''}`}>
                 {input.length}/{MAX_LEN}
               </span>
             )}
-            <button type="button" className="tcc-send" onClick={submit} disabled={!input.trim()}>
+            <button type="button" className="tcc-send" onClick={submit} disabled={!input.trim() || !connOk}>
               Gửi
             </button>
           </div>
@@ -1305,10 +1540,11 @@ export default function GlobalChatRoom({ socket, currentUser, onOpenProfile }) {
           <h4>⚡ Mẹo nhanh</h4>
           <ul>
             <li>Gõ @tên để nhắc ai đó</li>
-            <li>Rê chuột vào tin nhắn để thả cảm xúc / trả lời</li>
+            <li>Rê chuột vào tin nhắn để thả cảm xúc / trả lời / thu hồi</li>
             <li>Bấm vào trích dẫn để nhảy về tin gốc</li>
             <li>Gõ "haha", "deadline", "buồn"... để nhận GIF gợi ý</li>
-            <li>Dùng 🔍 để tìm lại tin nhắn cũ</li>
+            <li>Ctrl+K để tìm lại tin nhắn cũ</li>
+            <li>Tin bị lỗi sẽ có nút "Gửi lại"</li>
           </ul>
         </div>
 

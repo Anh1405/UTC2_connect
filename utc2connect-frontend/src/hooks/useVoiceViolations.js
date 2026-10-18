@@ -19,7 +19,7 @@ export default function useVoiceViolations({ addSystemMessage, onLimitReached })
 
   const registerViolation = useCallback(
     (speakerName) => {
-      if (countRef.current >= MAX_VOICE_VIOLATIONS) return; // đã đủ -> đang kết thúc cuộc gọi
+      if (countRef.current >= MAX_VOICE_VIOLATIONS) return null; // đã đủ -> đang kết thúc cuộc gọi
 
       const next = countRef.current + 1;
       countRef.current = next;
@@ -37,6 +37,7 @@ export default function useVoiceViolations({ addSystemMessage, onLimitReached })
       if (next >= MAX_VOICE_VIOLATIONS) {
         setTimeout(() => latest.current.onLimitReached(), 1500);
       }
+      return next;
     },
     [latest]
   );
@@ -46,6 +47,12 @@ export default function useVoiceViolations({ addSystemMessage, onLimitReached })
     setViolationCount(0);
     setToxicWarning(null);
   }, []);
-
-  return { violationCount, toxicWarning, registerViolation, resetViolations };
+  const notifySelfViolation = useCallback((count, max = MAX_VOICE_VIOLATIONS) => {
+  const text = count >= max
+    ? `🚫 Bạn đã vi phạm ngôn từ ${count}/${max} lần. Cuộc gọi sẽ bị kết thúc.`
+    : `⚠️ Hệ thống phát hiện bạn dùng ngôn từ không phù hợp (lần ${count}/${max}). Vi phạm ${max} lần sẽ bị kết thúc cuộc gọi.`;
+  setToxicWarning(text);
+  latest.current.addSystemMessage(text);
+  }, [latest]);
+  return { violationCount, toxicWarning, registerViolation, resetViolations, notifySelfViolation };
 }

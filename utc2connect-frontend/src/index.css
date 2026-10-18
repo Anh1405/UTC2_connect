@@ -1,1 +1,129 @@
 @import "tailwindcss";
+
+/* ============================================================================
+   UTC2 CONNECT - MASTER RESPONSIVE & LAYOUT ENGINE (CLEAN & NON-CONFLICTING)
+   ============================================================================ */
+
+/* 1. BIẾN KÍCH THƯỚC CHUẨN SYSTEM */
+:root {
+    --u2-nav-height: 56px;
+    --u2-wave-height: 12px;
+    --u2-navbar-total: calc(var(--u2-nav-height) + var(--u2-wave-height)); /* 68px */
+    --u2-bottom-nav-height: 60px;
+    --u2-safe-top: env(safe-area-inset-top, 0px);
+    --u2-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* 2. KHỞI TẠO NỀN TẢNG CUỘN TRANG */
+html, body, #root {
+    width: 100%;
+    min-height: 100dvh;
+    margin: 0;
+    padding: 0;
+    background-color: #EEF1F7;
+    color: #101B33;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.u2-page,
+.u2-home-layout {
+    width: 100%;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ============================================================================
+   3. CẤU HÌNH TRÊN MÁY TÍNH (DESKTOP >= 768px)
+   ============================================================================ */
+@media screen and (min-width: 768px) {
+    /* Khung nội dung chung: Chừa 280px bên trái cho Sidebar */
+    .u2-main-content {
+        margin-left: 280px;
+        max-width: calc(100% - 280px);
+        width: auto;
+        padding-top: calc(var(--u2-navbar-total) + 12px);
+        padding-bottom: 32px;
+        padding-left: 16px;
+        padding-right: 16px;
+        box-sizing: border-box;
+        min-height: calc(100vh - var(--u2-nav-height));
+    }
+
+    /* Riêng trang Trà Chanh (tea-mode) trên PC: Vừa khít màn hình, chừa Topbar */
+    .u2-main-content.tea-mode {
+        padding: 0 !important;
+        height: calc(100vh - var(--u2-nav-height)) !important;
+        margin-top: var(--u2-nav-height);
+        overflow: hidden !important;
+    }
+
+    /* Khung Trà chanh kế thừa 100% chiều cao */
+    .u2-main-content.tea-mode .tc-hub {
+        height: 100% !important;
+    }
+}
+
+/* ============================================================================
+   4. CẤU HÌNH TRÊN ĐIỆN THOẠI (MOBILE < 768px)
+   ============================================================================ */
+@media screen and (max-width: 767px) {
+    /* Ẩn Sidebar PC */
+    .u2-sidebar,
+    .u2-right-sidebar {
+        display: none !important;
+    }
+
+    /* Khung nội dung thường (Feed, Thuê trọ, Chợ cũ) */
+    .u2-main-content {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding-top: calc(var(--u2-navbar-total) + var(--u2-safe-top) + 8px);
+        padding-bottom: calc(var(--u2-bottom-nav-height) + var(--u2-safe-bottom) + 20px);
+        padding-left: 10px;
+        padding-right: 10px;
+        box-sizing: border-box;
+        min-height: 100dvh;
+        overflow-y: auto !important; /* Mở cuộn tự do trên di động */
+    }
+
+    /* Riêng trang Trà Chanh (tea-mode) trên Mobile: Vừa khít giữa Top và Bottom Nav */
+    .u2-main-content.tea-mode {
+        padding: 0 !important;
+        margin-top: calc(var(--u2-nav-height) + var(--u2-safe-top)) !important;
+        height: calc(100dvh - var(--u2-nav-height) - var(--u2-bottom-nav-height) - var(--u2-safe-top) - var(--u2-safe-bottom)) !important;
+        min-height: unset !important;
+        overflow: hidden !important;
+    }
+
+    .u2-main-content.tea-mode .tc-hub {
+        height: 100% !important;
+    }
+
+    /* Cho phép danh sách bài viết / chat cuộn mượt bên trong */
+    .tc-feed,
+    .tcc-scroll,
+    .u2-listing-grid {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Thanh Bottom Navigation chuẩn UX */
+    .u2-mobile-bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: calc(var(--u2-bottom-nav-height) + var(--u2-safe-bottom));
+        padding-bottom: var(--u2-safe-bottom);
+        background: #101B33;
+        border-top: 1px solid rgba(255, 253, 246, 0.12);
+        display: flex !important;
+        justify-content: space-around;
+        align-items: center;
+        z-index: 999;
+    }
+}

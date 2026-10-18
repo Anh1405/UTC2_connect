@@ -1,244 +1,439 @@
-/* Import phông chữ Be Vietnam Pro hỗ trợ chuẩn Tiếng Việt */
+/* ============================================================================
+   MarketModule.css — Production-grade styles for UTC2 Campus Marketplace
+   Design system: CSS custom properties, consistent spacing, motion, a11y
+   ============================================================================ */
+
 @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
 
-/* Scope tất cả CSS trong module Market */
+/* -------------------------------------------------------------------------- */
+/* Design tokens                                                              */
+/* -------------------------------------------------------------------------- */
 .u2-module {
-  font-family: 'Be Vietnam Pro', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-  color: #1e293b;
-  max-width: 1200px;
+  --u2-primary: #f59e0b;
+  --u2-primary-hover: #d97706;
+  --u2-primary-soft: #fef3c7;
+  --u2-secondary: #2563eb;
+  --u2-secondary-soft: #dbeafe;
+  --u2-danger: #dc2626;
+  --u2-danger-soft: #fef2f2;
+  --u2-success: #15803d;
+  --u2-success-soft: #dcfce7;
+  --u2-warning: #d97706;
+  --u2-warning-soft: #fef3c7;
+
+  --u2-surface: #ffffff;
+  --u2-surface-2: #f8fafc;
+  --u2-surface-3: #f1f5f9;
+  --u2-border: #e2e8f0;
+  --u2-border-strong: #cbd5e1;
+  --u2-text-main: #0f172a;
+  --u2-text-body: #1e293b;
+  --u2-text-sub: #64748b;
+  --u2-text-muted: #94a3b8;
+
+  --u2-radius-sm: 6px;
+  --u2-radius-md: 10px;
+  --u2-radius-lg: 14px;
+  --u2-radius-xl: 18px;
+  --u2-radius-full: 9999px;
+
+  --u2-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --u2-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --u2-shadow-lg: 0 12px 28px rgba(15, 23, 42, 0.12);
+  --u2-shadow-modal: 0 24px 48px rgba(15, 23, 42, 0.22);
+
+  --u2-transition: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  --u2-focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.35);
+
+  font-family: 'Be Vietnam Pro', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  color: var(--u2-text-body);
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 24px 16px;
+  padding: 24px 16px 48px;
+  box-sizing: border-box;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.u2-module *,
+.u2-module *::before,
+.u2-module *::after {
   box-sizing: border-box;
 }
 
-/* --- TOOLBAR / HEADER --- */
+/* -------------------------------------------------------------------------- */
+/* Toolbar / Header                                                           */
+/* -------------------------------------------------------------------------- */
 .u2-module-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e2e8f0;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--u2-border);
 }
 
 .u2-module-kicker {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #d97706;
+  letter-spacing: 0.1em;
+  color: var(--u2-primary-hover);
   text-transform: uppercase;
   margin: 0 0 4px 0;
 }
 
 .u2-module-title {
-  font-size: 1.85rem;
+  font-size: clamp(1.45rem, 2.5vw, 1.9rem);
   font-weight: 800;
-  color: #0f172a;
-  margin: 0 0 6px 0;
+  color: var(--u2-text-main);
+  margin: 0 0 4px 0;
   line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 .u2-module-sub {
-  font-size: 0.95rem;
-  color: #64748b;
+  font-size: 0.92rem;
+  color: var(--u2-text-sub);
   margin: 0;
 }
 
-/* --- BUTTONS --- */
+/* -------------------------------------------------------------------------- */
+/* Buttons                                                                    */
+/* -------------------------------------------------------------------------- */
 .u2-btn {
   font-family: inherit;
   font-size: 0.9rem;
   font-weight: 600;
   padding: 10px 18px;
-  border-radius: 8px;
+  border-radius: var(--u2-radius-md);
   border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color var(--u2-transition), color var(--u2-transition),
+    transform var(--u2-transition), box-shadow var(--u2-transition), opacity var(--u2-transition);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  line-height: 1.25;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.u2-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--u2-focus-ring);
 }
 
 .u2-btn.primary {
-  background-color: #f59e0b;
-  color: #0f172a;
-  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.25);
+  background-color: var(--u2-primary);
+  color: var(--u2-text-main);
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.28);
 }
 
-.u2-btn.primary:hover {
-  background-color: #d97706;
+.u2-btn.primary:hover:not(:disabled) {
+  background-color: var(--u2-primary-hover);
   color: #ffffff;
   transform: translateY(-1px);
 }
 
 .u2-btn.ghost {
   background-color: transparent;
-  color: #64748b;
-  border: 1px solid #cbd5e1;
+  color: var(--u2-text-sub);
+  border: 1px solid var(--u2-border-strong);
 }
 
-.u2-btn.ghost:hover {
-  background-color: #f1f5f9;
-  color: #0f172a;
+.u2-btn.ghost:hover:not(:disabled) {
+  background-color: var(--u2-surface-2);
+  color: var(--u2-text-main);
+  border-color: var(--u2-border-strong);
+}
+
+.u2-btn.danger {
+  background-color: var(--u2-danger);
+  color: #ffffff;
+}
+
+.u2-btn.danger:hover:not(:disabled) {
+  background-color: #b91c1c;
+  transform: translateY(-1px);
 }
 
 .u2-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.55;
   cursor: not-allowed;
   transform: none !important;
+  box-shadow: none !important;
 }
 
-/* --- LAYOUT CHỢ TỐT --- */
+.u2-btn.flex-1 {
+  flex: 1;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Tabs                                                                       */
+/* -------------------------------------------------------------------------- */
+.u2-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid var(--u2-border);
+  margin-bottom: 22px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.u2-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.u2-tab {
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 11px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--u2-text-sub);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  white-space: nowrap;
+  transition: color var(--u2-transition), border-color var(--u2-transition);
+}
+
+.u2-tab:hover {
+  color: var(--u2-text-main);
+}
+
+.u2-tab.active {
+  color: var(--u2-secondary);
+  border-bottom-color: var(--u2-secondary);
+}
+
+.u2-tab:focus-visible {
+  outline: none;
+  box-shadow: var(--u2-focus-ring);
+  border-radius: var(--u2-radius-sm);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Layout                                                                     */
+/* -------------------------------------------------------------------------- */
 .u2-chotot-layout {
   display: grid;
-  grid-template-columns: 260px 1fr;
+  grid-template-columns: 268px 1fr;
   gap: 24px;
+  align-items: start;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .u2-chotot-layout {
     grid-template-columns: 1fr;
   }
 }
 
-/* --- BỘ LỌC (SIDEBAR) --- */
+/* -------------------------------------------------------------------------- */
+/* Filter panel                                                               */
+/* -------------------------------------------------------------------------- */
 .u2-filter-panel {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  height: fit-content;
+  background: var(--u2-surface);
+  border: 1px solid var(--u2-border);
+  border-radius: var(--u2-radius-lg);
+  padding: 18px;
+  box-shadow: var(--u2-shadow-sm);
+  position: sticky;
+  top: 16px;
 }
 
 .u2-label {
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: #334155;
-  margin-bottom: 6px;
+  margin-bottom: 7px;
   display: block;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .u2-chip-wrap {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 16px;
+  margin-bottom: 4px;
 }
 
 .u2-reason-chip {
   font-family: inherit;
   font-size: 0.8rem;
-  padding: 5px 12px;
-  border-radius: 20px;
-  border: 1px solid #e2e8f0;
-  background-color: #f8fafc;
+  padding: 6px 12px;
+  border-radius: var(--u2-radius-full);
+  border: 1px solid var(--u2-border);
+  background-color: var(--u2-surface-2);
   color: #475569;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--u2-transition);
+  line-height: 1.2;
 }
 
-.u2-reason-chip.active, .u2-reason-chip:hover {
-  background-color: #0f172a;
+.u2-reason-chip:hover {
+  background-color: var(--u2-surface-3);
+  border-color: var(--u2-border-strong);
+}
+
+.u2-reason-chip.active {
+  background-color: var(--u2-text-main);
   color: #ffffff;
-  border-color: #0f172a;
+  border-color: var(--u2-text-main);
+}
+
+.u2-reason-chip:focus-visible {
+  outline: none;
+  box-shadow: var(--u2-focus-ring);
 }
 
 .u2-price-words {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: #059669;
   font-weight: 600;
-  margin-top: 4px;
+  margin-top: 6px;
   background-color: #ecfdf5;
-  padding: 6px 10px;
-  border-radius: 6px;
+  padding: 7px 10px;
+  border-radius: var(--u2-radius-sm);
+  line-height: 1.35;
 }
 
-/* --- INPUT & FORM --- */
+/* -------------------------------------------------------------------------- */
+/* Form controls                                                              */
+/* -------------------------------------------------------------------------- */
 .u2-input {
   font-family: inherit;
   width: 100%;
-  padding: 9px 12px;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
+  padding: 10px 12px;
+  border-radius: var(--u2-radius-md);
+  border: 1px solid var(--u2-border-strong);
   font-size: 0.9rem;
-  color: #0f172a;
-  box-sizing: border-box;
-  transition: border-color 0.2s;
-  background-color: #ffffff;
+  color: var(--u2-text-main);
+  background-color: var(--u2-surface);
+  transition: border-color var(--u2-transition), box-shadow var(--u2-transition);
+  appearance: none;
 }
 
 .u2-input:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  box-shadow: var(--u2-focus-ring);
 }
 
-/* --- PRODUCT GRID & CARDS --- */
+.u2-input::placeholder {
+  color: var(--u2-text-muted);
+}
+
+textarea.u2-input {
+  resize: vertical;
+  min-height: 72px;
+}
+
+select.u2-input {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+input[type='range'] {
+  width: 100%;
+  accent-color: var(--u2-primary);
+  cursor: pointer;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Product grid & cards                                                       */
+/* -------------------------------------------------------------------------- */
 .u2-listing-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
   gap: 16px;
 }
 
 .u2-listing-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  background: var(--u2-surface);
+  border: 1px solid var(--u2-border);
+  border-radius: var(--u2-radius-lg);
   overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform var(--u2-transition), box-shadow var(--u2-transition), border-color var(--u2-transition);
   cursor: pointer;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .u2-listing-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  border-color: #cbd5e1;
+  box-shadow: var(--u2-shadow-md);
+  border-color: var(--u2-border-strong);
 }
 
-.u2-listing-thumb {
+.u2-listing-card:focus-visible {
+  outline: none;
+  box-shadow: var(--u2-focus-ring);
+}
+
+.u2-listing-card.is-mine {
+  border: 2px solid var(--u2-secondary);
+}
+
+.u2-listing-thumb,
+.u2-listing-card figure {
   width: 100%;
   aspect-ratio: 4 / 3;
-  background-size: cover;
-  background-position: center;
-  background-color: #f1f5f9;
+  background-color: var(--u2-surface-3);
   position: relative;
+  margin: 0;
+  overflow: hidden;
+}
+
+.u2-listing-thumb img,
+.u2-listing-card figure img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .u2-badge-count {
   position: absolute;
   bottom: 8px;
   right: 8px;
-  background: rgba(15, 23, 42, 0.75);
+  background: rgba(15, 23, 42, 0.78);
   color: #ffffff;
   font-size: 0.7rem;
   font-weight: 600;
   padding: 3px 8px;
-  border-radius: 12px;
+  border-radius: var(--u2-radius-full);
   backdrop-filter: blur(4px);
 }
 
 .u2-listing-body {
-  padding: 12px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  gap: 6px;
 }
 
 .u2-listing-price {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 800;
-  color: #d97706;
+  color: var(--u2-danger);
+  letter-spacing: -0.01em;
 }
 
 .u2-listing-card h3 {
-  font-size: 0.95rem;
+  font-size: 0.98rem;
   font-weight: 600;
-  color: #0f172a;
-  margin: 6px 0;
+  color: var(--u2-text-main);
+  margin: 0;
   line-height: 1.35;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -246,57 +441,208 @@
   overflow: hidden;
 }
 
-.u2-listing-card p {
-  font-size: 0.8rem;
-  color: #64748b;
-  margin-top: auto;
+.u2-ai-badge {
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
 }
 
-/* --- OVERLAY & MODAL (FIX CẮT XÉN) --- */
+.u2-rating-stars {
+  color: #f59e0b;
+  margin-right: 2px;
+}
+
+.u2-trust-score {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--u2-text-sub);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Fav button                                                                 */
+/* -------------------------------------------------------------------------- */
+.u2-fav-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.94);
+  border: none;
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  cursor: pointer;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--u2-shadow-sm);
+  transition: transform var(--u2-transition), background var(--u2-transition);
+}
+
+.u2-fav-btn:hover {
+  transform: scale(1.08);
+  background: #fff;
+}
+
+.u2-fav-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--u2-focus-ring);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Empty & skeleton states                                                    */
+/* -------------------------------------------------------------------------- */
+.u2-empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--u2-text-sub);
+  background: var(--u2-surface-2);
+  border-radius: var(--u2-radius-lg);
+  border: 1px dashed var(--u2-border-strong);
+}
+
+.u2-empty-state__icon {
+  font-size: 2.4rem;
+  margin-bottom: 10px;
+  opacity: 0.7;
+}
+
+.u2-empty-state__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--u2-text-main);
+  margin: 0 0 6px;
+}
+
+.u2-empty-state__desc {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.u2-skeleton-card {
+  background: var(--u2-surface);
+  border: 1px solid var(--u2-border);
+  border-radius: var(--u2-radius-lg);
+  overflow: hidden;
+}
+
+.u2-skeleton-thumb {
+  aspect-ratio: 4 / 3;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: u2-shimmer 1.4s ease-in-out infinite;
+}
+
+.u2-skeleton-line {
+  height: 12px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: u2-shimmer 1.4s ease-in-out infinite;
+  margin: 10px 14px;
+}
+
+@keyframes u2-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Overlay & Modal                                                            */
+/* -------------------------------------------------------------------------- */
 .u2-report-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(4px);
+  background-color: rgba(15, 23, 42, 0.62);
+  backdrop-filter: blur(5px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 16px;
+  animation: u2-fadeIn 0.18s ease-out;
 }
 
-/* Khung Modal chính: Giới hạn 90% chiều cao màn hình */
-.u2-detail-modal, 
+@keyframes u2-fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.u2-detail-modal,
 .u2-report-ticket {
-  background: #ffffff;
-  border-radius: 16px;
+  background: var(--u2-surface);
+  border-radius: var(--u2-radius-xl);
   width: 100%;
-  max-width: 520px;
-  max-height: 90vh; /* Giới hạn không cho vượt quá 90% màn hình */
+  max-width: 540px;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--u2-shadow-modal);
   position: relative;
   overflow: hidden;
-  animation: modalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: u2-modalIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes modalIn {
-  from { opacity: 0; transform: scale(0.96) translateY(8px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+@keyframes u2-modalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
-/* Header cố định ở đỉnh */
 .u2-report-head {
-  background-color: #0f172a;
-  padding: 16px 20px;
+  background-color: var(--u2-text-main);
+  padding: 15px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
+  gap: 12px;
 }
 
-/* Thân Modal: Tự động cuộn khi nội dung dài */
+.u2-report-head h3 {
+  color: #ffffff;
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.u2-report-close {
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
+  color: #ffffff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--u2-transition);
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.u2-report-close:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.u2-report-close:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #fff;
+}
+
 .u2-report-body {
   padding: 20px;
   overflow-y: auto;
@@ -304,44 +650,48 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+  overscroll-behavior: contain;
 }
 
-/* Tùy chỉnh thanh cuộn đẹp mắt cho body */
 .u2-report-body::-webkit-scrollbar {
   width: 6px;
 }
+
 .u2-report-body::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--u2-border-strong);
   border-radius: 4px;
 }
+
 .u2-report-body::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
 
-/* Footer cố định ở đáy */
 .u2-report-footer {
   padding: 14px 20px;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  border-top: 1px solid #e2e8f0;
-  background-color: #ffffff;
+  border-top: 1px solid var(--u2-border);
+  background-color: var(--u2-surface);
   flex-shrink: 0;
 }
 
-/* --- CAROUSEL / GALLERY PREVIEW --- */
+/* -------------------------------------------------------------------------- */
+/* Carousel / Gallery                                                         */
+/* -------------------------------------------------------------------------- */
 .u2-carousel {
-  background-color: #0f172a;
+  background-color: var(--u2-text-main);
   padding: 16px;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .u2-carousel-main-img {
-  max-height: 320px;
+  max-height: 300px;
   width: auto;
   max-width: 100%;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: var(--u2-radius-md);
 }
 
 .u2-carousel-thumbs {
@@ -351,34 +701,41 @@
   margin-top: 12px;
   justify-content: center;
   padding-bottom: 4px;
+  scrollbar-width: thin;
 }
 
 .u2-thumb-img {
-  width: 50px;
-  height: 50px;
+  width: 52px;
+  height: 52px;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: var(--u2-radius-sm);
   cursor: pointer;
-  opacity: 0.6;
-  transition: opacity 0.2s, border-color 0.2s;
+  opacity: 0.55;
+  transition: opacity var(--u2-transition), border-color var(--u2-transition);
   border: 2px solid transparent;
+  flex-shrink: 0;
 }
 
-.u2-thumb-img.active, .u2-thumb-img:hover {
+.u2-thumb-img.active,
+.u2-thumb-img:hover {
   opacity: 1;
   border-color: #3b82f6;
 }
 
 .u2-detail-body {
   padding: 20px;
+  overflow-y: auto;
+  flex: 1;
 }
 
-/* --- FORM ĐĂNG TIN BÁN --- */
+/* -------------------------------------------------------------------------- */
+/* Upload / Create listing                                                    */
+/* -------------------------------------------------------------------------- */
 .u2-upload-box {
-  background-color: #f8fafc;
+  background-color: var(--u2-surface-2);
   padding: 12px;
-  border-radius: 8px;
-  border: 1px dashed #cbd5e1;
+  border-radius: var(--u2-radius-md);
+  border: 1px dashed var(--u2-border-strong);
 }
 
 .u2-detail-grid-thumbs {
@@ -390,75 +747,229 @@
 
 .u2-detail-thumb-item {
   position: relative;
-  width: 60px;
-  height: 60px;
+  width: 64px;
+  height: 64px;
 }
 
 .u2-detail-thumb-item img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
+  border-radius: var(--u2-radius-sm);
+  border: 1px solid var(--u2-border);
 }
 
 .u2-thumb-delete {
   position: absolute;
   top: -6px;
   right: -6px;
-  background: #ef4444;
+  background: var(--u2-danger);
   color: #ffffff;
   border: none;
   border-radius: 50%;
-  width: 18px;
-  height: 18px;
-  font-size: 10px;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
-/* --- NHÓM NÚT TƯƠNG TÁC (NHẮN TIN & MUA NGAY) --- */
+
+.u2-thumb-delete:hover {
+  background: #b91c1c;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Action group & seller box                                                  */
+/* -------------------------------------------------------------------------- */
 .u2-action-group {
   display: flex;
   gap: 12px;
-  margin-top: 20px;
+  margin-top: 18px;
   padding-top: 16px;
-  border-top: 1px solid #e2e8f0;
-}
-
-.u2-action-group .flex-1 {
-  flex: 1;
+  border-top: 1px solid var(--u2-border);
 }
 
 .u2-action-group .u2-btn {
   padding: 12px;
   font-size: 0.95rem;
-  border-radius: 10px;
+  border-radius: var(--u2-radius-md);
 }
-/* --- THẺ HỒ SƠ NGƯỜI BÁN --- */
+
 .u2-seller-box {
-  margin-top: 16px;
+  margin-top: 14px;
   padding: 10px 14px;
-  background: #f8fafc;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  background: var(--u2-surface-2);
+  border-radius: var(--u2-radius-lg);
+  border: 1px solid var(--u2-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--u2-transition);
 }
 
 .u2-seller-box:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+  background: var(--u2-surface-3);
+  border-color: var(--u2-border-strong);
   transform: translateY(-1px);
 }
 
 .u2-seller-link {
-  font-size: 0.825rem;
-  color: #2563eb;
+  font-size: 0.82rem;
+  color: var(--u2-secondary);
   font-weight: 600;
   white-space: nowrap;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Status badges (shared)                                                     */
+/* -------------------------------------------------------------------------- */
+.u2-status-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-block;
+  line-height: 1.3;
+}
+
+.u2-status-badge--available {
+  background: var(--u2-success-soft);
+  color: var(--u2-success);
+}
+
+.u2-status-badge--reserved {
+  background: var(--u2-warning-soft);
+  color: var(--u2-warning);
+}
+
+.u2-status-badge--sold {
+  background: var(--u2-danger-soft);
+  color: var(--u2-danger);
+}
+
+.u2-status-badge--mine {
+  background: var(--u2-secondary-soft);
+  color: #1d4ed8;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Orders table                                                               */
+/* -------------------------------------------------------------------------- */
+.u2-orders-wrap {
+  background: var(--u2-surface);
+  border-radius: var(--u2-radius-lg);
+  padding: 4px;
+  border: 1px solid var(--u2-border);
+  overflow-x: auto;
+}
+
+.u2-orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.u2-orders-table thead tr {
+  background: var(--u2-surface-2);
+  border-bottom: 1px solid var(--u2-border);
+}
+
+.u2-orders-table th {
+  padding: 12px 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--u2-text-sub);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.u2-orders-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--u2-surface-3);
+  vertical-align: middle;
+}
+
+.u2-orders-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.u2-orders-table tbody tr:hover {
+  background: var(--u2-surface-2);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Result count bar                                                           */
+/* -------------------------------------------------------------------------- */
+.u2-result-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 0.88rem;
+  color: var(--u2-text-sub);
+}
+
+.u2-result-bar strong {
+  color: var(--u2-text-main);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Responsive tweaks                                                          */
+/* -------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+  .u2-module-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .u2-module-toolbar .u2-btn {
+    width: 100%;
+  }
+
+  .u2-action-group {
+    flex-direction: column;
+  }
+
+  .u2-listing-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+  }
+}
+/* ==========================================================
+   FIX CUỘN MOBILE CHO THUÊ TRỌ & CHỢ CŨ
+   ========================================================== */
+@media screen and (max-width: 1024px) {
+  .u2-module {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+    padding-bottom: 120px !important; /* Chừa khoảng trống cho Bottom Nav */
+  }
+
+  .u2-chotot-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Tắt sticky trên mobile để xả vuốt cảm ứng trơn tru */
+  .u2-filter-panel {
+    position: static !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .u2-results,
+  .u2-listing-grid {
+    height: auto !important;
+    overflow: visible !important;
+  }
 }
